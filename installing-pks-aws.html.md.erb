@@ -18,11 +18,10 @@ This topic assumes that you used Terraform to prepare the AWS environment for th
 For more information, see [Deploying Ops Manager on AWS
 Using Terraform](https://docs.pivotal.io/pcf/om/aws/prepare-env-terraform.html).
 
-<%= partial 'prerequisites' %>
 
 ##<a id='install'></a> Step 1: Install <%= vars.product_short %>
 
-<%= partial 'install-pks' %>
+
 
 ##<a id='configure'></a> Step 2: Configure <%= vars.product_short %>
 
@@ -36,15 +35,10 @@ Click the orange **<%= vars.product_tile %>** tile to start the configuration pr
 
 ###<a id='azs-networks'></a> Assign AZs and Networks
 
-<%= partial 'azs-networks' %>
 
-###<a id='pks-api'></a> PKS API
-
-<%= partial 'pks-api' %>
 
 ###<a id='plans'></a> Plans
 
-<%= partial 'plans' %>
 
 ###<a id='cloud-provider'></a> Kubernetes Cloud Provider
 
@@ -64,7 +58,7 @@ To configure your Kubernetes cloud provider settings, follow the procedures belo
 
 ###<a id='syslog'></a> (Optional) Logging
 
-<%= partial 'logging' %>
+
 
 ###<a id='networking'></a> Networking
 
@@ -82,16 +76,7 @@ To configure networking, do the following:
 
 ###<a id='uaa'></a> UAA
 
-<%= partial 'uaa' %>
 
-###<a id='monitoring'></a> (Optional) Monitoring
-<%= partial 'monitoring' %>
-
-###<a id='telemetry'></a> CEIP and Telemetry
-<%= partial 'usage-data' %>
-
-###<a id='errands'></a> Errands
-<%= partial 'errands' %>
 
 ###<a id='resource-config'></a> Resource Config
 
@@ -108,7 +93,7 @@ prefixed with `alb:`.
     Where `ENV` matches the `env_name` that you defined when you set up Terraform. 
     For example: <code>alb:pcf-pks-tg-9021,alb:pcf-pks-tg-8443</code> 
 
-    <%= partial 'lb-resource-config' %>
+
 
 1. (Optional) Edit other resources used by the **PKS API** job.
 The **PKS API** job requires a VM with the following minimum
@@ -130,15 +115,7 @@ resources:
 
 ##<a id='apply-changes'></a> Step 3: Apply Changes
 
-<%= partial 'apply-changes' %>
 
-##<a id='retrieve-pks-api'></a> Step 4: Retrieve the PKS API Endpoint
-
-<%= partial 'share-endpoint' %>
-
-## <a id='clis'></a> Step 5: Install the PKS and Kubernetes CLIs
-
-<%= partial 'install-cli' %>
 
 ## <a id='auth'></a> Step 6: Configure Authentication for <%= vars.product_short %>
  
