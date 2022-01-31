@@ -13,11 +13,9 @@ This topic describes how to install and configure <%= vars.product_full %> on vS
 Before performing the procedures in this topic, you must have deployed and configured Ops Manager.
 For more information, see [vSphere Prerequisites and Resource Requirements](vsphere-requirements.html).
 
-<%= partial 'prerequisites' %>
-
 ##<a id='install'></a> Step 1: Install <%= vars.product_short %>
 
-<%= partial 'install-pks' %>
+
 
 ##<a id='configure'></a> Step 2: Configure <%= vars.product_short %>
 
@@ -31,7 +29,7 @@ Click the orange **<%= vars.product_tile %>** tile to start the configuration pr
 
 ###<a id='azs-networks'></a> Assign AZs and Networks
 
-<%= partial 'azs-networks' %>
+
 
 ###<a id='pks-api'></a> PKS API
 
@@ -39,35 +37,26 @@ Click the orange **<%= vars.product_tile %>** tile to start the configuration pr
 
 ###<a id='plans'></a> Plans
 
-<%= partial 'plans' %>
+
 
 ###<a id='cloud-provider'></a> Kubernetes Cloud Provider
 
-<%= partial 'cloud-provider' %>
+
 
 ###<a id='syslog'></a> (Optional) Logging
 
-<%= partial 'logging' %>
+
 
 ###<a id='networking'></a> Networking
 
-<%= partial 'networking-vsphere' %>
 
-###<a id='uaa'></a> UAA
 
-<%= partial 'uaa' %>
+
+
+
 
 ###<a id='monitoring'></a> (Optional) Monitoring
 
-<%= partial 'monitoring' %>
-
-###<a id='telemetry'></a> CEIP and Telemetry
-
-<%= partial 'usage-data' %>
-
-###<a id='errands'></a> Errands
-
-<%= partial 'errands' %>
 
 ###<a id='resource-config'></a> (Optional) Resource Config
 
@@ -98,7 +87,7 @@ resources:
 
 ## <a id='apply-changes'></a> Step 3: Apply Changes
 
-<%= partial 'apply-changes' %>
+
 
 ## <a id='next-install-step'></a> Next Installation Step
 
