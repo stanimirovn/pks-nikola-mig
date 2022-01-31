@@ -1,0 +1,531 @@
+---
+title: PKS CLI
+owner: PKS
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes how to use the Pivotal Container Service Command Line Interface (PKS CLI) to interact with the PKS API.
+
+The [PKS CLI](../installing-pks-cli.html) is used to create, manage, and delete Kubernetes clusters.
+To deploy workloads to a Kubernetes cluster created using the PKS CLI, use the Kubernetes CLI, [kubectl](../installing-kubectl-cli.html).
+
+**Current Version**: 1.5.0-build.288
+
+## <a id='cluster'></a> pks cluster
+
+View the details of the cluster
+
+### Synopsis
+
+Run this command to see details of your cluster such as
+			name, host, port, ID, number of worker nodes, last operation, etc.
+
+```
+pks cluster [flags]
+```
+
+### Examples
+
+```
+  pks cluster my-cluster
+```
+
+### Options
+
+```
+      --details   Show details
+  -h, --help      help for cluster
+      --json      Return the PKS-API output as json
+```
+
+## <a id='clusters'></a> pks clusters
+
+Show all clusters created with PKS
+
+### Synopsis
+
+This command describes the clusters created via PKS, and the last action taken on the cluster
+
+```
+pks clusters [flags]
+```
+
+### Examples
+
+```
+  pks clusters
+```
+
+### Options
+
+```
+  -h, --help   help for clusters
+      --json   Return the PKS-API output as json
+```
+
+## <a id='create-cluster'></a> pks create-cluster
+
+Creates a kubernetes cluster, requires cluster name, an external host name, and plan
+
+### Synopsis
+
+Create-cluster requires a cluster name, as well as an external hostname and plan. External hostname can be a loadbalancer, from which you access your kubernetes API (aka, your cluster control plane)
+
+```
+pks create-cluster <cluster-name> [flags]
+```
+
+### Examples
+
+```
+  pks create-cluster my-cluster --external-hostname example.hostname --plan production
+```
+
+### Options
+
+```
+  -e, --external-hostname string   Address from which to access Kubernetes API
+  -h, --help                       help for create-cluster
+      --json                       Return the PKS-API output as json
+      --network-profile string     Optional, network profile name (NSX-T only)
+      --non-interactive            Don't ask for user input
+  -n, --num-nodes string           Number of worker nodes
+  -p, --plan string                Preconfigured plans. Run pks plans for more details
+      --wait                       Wait for the operation to finish
+```
+
+## <a id='create-network-profile'></a> pks create-network-profile
+
+Create a network profile
+
+### Synopsis
+
+Create network profile requires a path to the profile JSON file (Only applicable for NSX-T)
+
+```
+pks create-network-profile <network-profile-JSON-path> [flags]
+```
+
+### Examples
+
+```
+  pks create-network-profile my-network-profile.json
+```
+
+### Options
+
+```
+  -h, --help   help for create-network-profile
+```
+
+## <a id='create-sink'></a> pks create-sink
+
+Creates a sink for sending all log data
+
+### Synopsis
+
+Creates a sink for sending all log data via syslog, syslog-tls, or https
+
+```
+pks create-sink <cluster-name> <sink-url> [--name sink-name] [flags]
+```
+
+### Examples
+
+```
+  pks create-sink my-cluster syslog://example.com:12345
+```
+
+### Options
+
+```
+  -h, --help          help for create-sink
+      --name string   Specify a custom name for the sink
+```
+
+## <a id='delete-cluster'></a> pks delete-cluster
+
+Deletes a kubernetes cluster, requires cluster name
+
+### Synopsis
+
+Delete-cluster requires a cluster name.
+
+```
+pks delete-cluster <cluster-name> [flags]
+```
+
+### Examples
+
+```
+  pks delete-cluster my-cluster
+```
+
+### Options
+
+```
+  -h, --help              help for delete-cluster
+      --non-interactive   Don't ask for user input
+      --wait              Wait for the operation to finish
+```
+
+## <a id='delete-network-profile'></a> pks delete-network-profile
+
+Delete a network profile
+
+### Synopsis
+
+Deletes network profile. Requires a network profile name (Only applicable for NSX-T). Cannot be deleted if in use
+
+```
+pks delete-network-profile PROFILE_NAME [flags]
+```
+
+### Examples
+
+```
+ pks delete-network-profile my-network-profile
+```
+
+### Options
+
+```
+  -h, --help              help for delete-network-profile
+      --non-interactive   Don't ask for user input
+```
+
+## <a id='delete-sink'></a> pks delete-sink
+
+Deletes a sink from the given cluster
+
+### Synopsis
+
+Deletes a sink from the given cluster
+
+```
+pks delete-sink <cluster-name> [--name sink-name] [flags]
+```
+
+### Examples
+
+```
+  pks delete-sink my-cluster
+```
+
+### Options
+
+```
+  -h, --help          help for delete-sink
+      --name string   Specify a custom name for the sink
+```
+
+## <a id='get-credentials'></a> pks get-credentials
+
+Allows you to connect to a cluster and use kubectl
+
+### Synopsis
+
+Run this command in order to update a kubeconfig file so you can access the cluster through kubectl
+
+```
+pks get-credentials <cluster-name> [flags]
+```
+
+### Examples
+
+```
+  pks get-credentials my-cluster
+```
+
+### Options
+
+```
+  -h, --help                  help for get-credentials
+      --sso                   Prompt for a one-time passcode to do Single sign-on
+      --sso-auto              Auto launch local browser to do Single sign-on
+      --sso-passcode string   Single sign-on with one-time passcode
+```
+
+## <a id='get-kubeconfig'></a> pks get-kubeconfig
+
+Allows you to get kubeconfig for your username
+
+### Synopsis
+
+Run this command in order to get a kubeconfig file so you can access the cluster through kubectl. Typically your kubeconfig will need to be updated based on any new role bindings you have been granted.
+
+```
+pks get-kubeconfig <cluster-name> -u username -p password -a api [flags]
+```
+
+### Examples
+
+```
+  pks get-kubeconfig my-cluster -u username -p password -a 192.168.1.1
+```
+
+### Options
+
+```
+  -a, --api string            API
+      --ca-cert string        Path to CA Cert for PKS API
+  -h, --help                  help for get-kubeconfig
+  -p, --password string       Password
+  -k, --skip-ssl-validation   Skip SSL Validation
+      --sso                   Prompt for a one-time passcode to do Single sign-on
+      --sso-auto              Auto launch local browser to do Single sign-on
+      --sso-passcode string   Single sign-on with one-time passcode
+  -u, --username string       Username
+```
+
+## <a id='login'></a> pks login
+
+Log in to PKS
+
+### Synopsis
+
+The login command requires -a to target the IP of your PKS API, -u for username and -p for password
+
+```
+pks login [flags]
+```
+
+### Examples
+
+```
+  pks login -a <API> -u <USERNAME> -p <PASSWORD> [--ca-cert <PATH TO CERT> | -k]
+
+  pks login -a <API> --client-name <CLIENT NAME> --client-secret <CLIENT SECRET> [--ca-cert <PATH TO CERT> | -k]
+```
+
+### Options
+
+```
+  -a, --api string              The PKS API server URI
+      --ca-cert string          Path to CA Cert for PKS API
+      --client-name string      Client name
+      --client-secret string    Client secret
+  -h, --help                    help for login
+  -p, --password string         Password
+  -k, --skip-ssl-validation     Skip SSL Validation
+      --skip-ssl-verification   Skip SSL Verification (DEPRECATED: use --skip-ssl-validation)
+      --sso                     Prompt for a one-time passcode to do Single sign-on
+      --sso-auto                Auto launch local browser to do Single sign-on
+      --sso-passcode string     Single sign-on with one-time passcode
+  -u, --username string         Username
+```
+
+## <a id='logout'></a> pks logout
+
+Log out of PKS
+
+### Synopsis
+
+Log out of PKS. Does not remove kubeconfig credentials or kubectl access.
+
+```
+pks logout [flags]
+```
+
+### Examples
+
+```
+  pks logout
+```
+
+### Options
+
+```
+  -h, --help   help for logout
+```
+
+## <a id='network-profile'></a> pks network-profile
+
+View a network profile
+
+### Synopsis
+
+View saved network profile configuration
+
+```
+pks network-profile <profile-name> [flags]
+```
+
+### Examples
+
+```
+  pks network-profile large-lb-profile
+```
+
+### Options
+
+```
+  -h, --help   help for network-profile
+      --json   Return the PKS-API output as json
+```
+
+## <a id='network-profiles'></a> pks network-profiles
+
+Show all network profiles created with PKS
+
+### Synopsis
+
+Lists and describes network profiles
+
+```
+pks network-profiles [flags]
+```
+
+### Examples
+
+```
+  pks network-profiles
+```
+
+### Options
+
+```
+  -h, --help   help for network-profiles
+      --json   Return the PKS-API output as json
+```
+
+## <a id='plans'></a> pks plans
+
+View the preconfigured plans available
+
+### Synopsis
+
+This command describes the preconfigured plans available
+
+```
+pks plans [flags]
+```
+
+### Examples
+
+```
+  pks plans
+```
+
+### Options
+
+```
+  -h, --help   help for plans
+      --json   Return the PKS-API output as json
+```
+
+## <a id='resize'></a> pks resize
+
+Changes the number of worker nodes for a cluster
+
+### Synopsis
+
+Resize requires a cluster name, and the number of desired worker nodes. Users can scale up clusters to the plan defined maximum number of worker nodes, or scale down clusters to one node
+
+```
+pks resize <cluster-name> [flags]
+```
+
+### Examples
+
+```
+  pks resize my-cluster --num-nodes 5
+```
+
+### Options
+
+```
+  -h, --help              help for resize
+      --json              Return the PKS-API output as json. Only applicable when used with --wait flag
+      --non-interactive   Don't ask for user input
+  -n, --num-nodes int32   Number of worker nodes (default 1)
+      --wait              Wait for the operation to finish
+```
+
+## <a id='sinks'></a> pks sinks
+
+List sinks for the given cluster
+
+### Synopsis
+
+List sinks for the given cluster
+
+```
+pks sinks <cluster-name> [flags]
+```
+
+### Examples
+
+```
+  pks sinks
+```
+
+### Options
+
+```
+  -h, --help   help for sinks
+      --json   Return the PKS-API output as json
+```
+
+## <a id='update-cluster'></a> pks update-cluster
+
+Updates the configuration of a specific kubernetes cluster
+
+### Synopsis
+
+Update-cluster requires a target cluster name and at least 1 valid action flag (e.g. --num-nodes). Update-cluster will update the cluster settings based on the passed flag values and all updated values will persist through cluster upgrades.
+
+
+```
+pks update-cluster <cluster-name> [flags]
+```
+
+### Examples
+
+```
+  pks update-cluster my-cluster --num-nodes 5
+```
+
+### Options
+
+```
+      --network-profile string                   Action flag, Network profile name
+      --num-nodes int32                          Action flag, Number of worker nodes
+      --kubelet-drain-timeout string             Action flag, The length of time in minutes for drain to wait before giving up.
+      --kubelet-drain-grace-period string        Action flag, Period of time in seconds given to each pod to terminate gracefully.
+      --kubelet-drain-force string               Action flag, Force drain even if there are pods not managed by a ReplicationController, ReplicaSet, Job, DaemonSet or StatefulSet.
+      --kubelet-drain-ignore-daemonsets string   Action flag, Ignore DaemonSet managed pods during drain.
+      --kubelet-drain-delete-local-data string   Action flag, Drain even if there are pods using emptyDir.
+      --kubelet-drain-force-node string          Action flag, Forcefully terminate pods which fail to drain. Use it with caution.
+      --non-interactive                          Don't ask for user input
+      --json                                     Return the PKS-API output as json
+      --wait                                     Wait for the operation to finish
+  -h, --help                                     help for update-cluster
+```
+
+## <a id='upgrade-cluster'></a> pks upgrade-cluster
+
+Upgrades the kubernetes clusters
+
+### Synopsis
+
+Upgrades the kubernetes clusters listed. You need to provide a single cluster name
+
+```
+pks upgrade-cluster <cluster-one> [flags]
+```
+
+### Examples
+
+```
+pks upgrade-cluster <one-cluster>
+```
+
+### Options
+
+```
+  -h, --help              help for upgrade-cluster
+      --json              Return the PKS-API output as json
+      --non-interactive   Don't ask for user input
+```

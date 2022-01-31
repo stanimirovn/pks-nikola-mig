@@ -1,0 +1,246 @@
+---
+title: Monitoring Enterprise PKS with Sinks
+owner: PKS
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes the sink resources you can use to monitor <%= vars.product_full %> deployments.
+
+For information about creating and managing sinks in <%= vars.product_short %>, see [Creating Sink Resources](create-sinks.html).
+
+## <a id='overview'></a>Overview
+
+You can use sink resources to gather logs and metrics from your
+<%= vars.product_short %> deployment.
+
+You can create the following types of sink resources:
+
+<%= partial 'sink-resources' %>
+
+## <a id='logs'></a>Log Sink Resources
+
+`LogSink` and `ClusterLogSink` resources include both pod logs as well as events from the Kubernetes API. 
+
+These logs and events are combined in a shared format to provide operators with a 
+robust set of filtering and monitoring options. 
+
+Sink data has the following characteristics. All entries:
+
+* Are timestamped.
+* Contain the human-readable cluster name.
+* Are annotated with a set of structured data, which includes the namespace, the object name or pod ID, and the container name.
+
+The logs you send using either the `LogSink` or `ClusterLogSink` resource use the Syslog Protocol. 
+For the `ClusterLogSink` resource, you can also use a webhook to send logs.
+
+<p class="note"><strong>Note</strong>: <%= vars.product_short %> requires a secure connection be used for log forwarding.
+</p>
+
+### <a id='sink-logs'></a>Syslog Format
+
+Logs that you send using either the `ClusterLogSink` or `Sink` resource use the following format:
+
+```
+APP-NAME/NAMESPACE/POD-ID/CONTAINER-NAME
+```
+
+Where:
+
+  * `APP-NAME` is `pod.log` or `k8s.event`.
+  * `NAMESPACE` is the namespace associated with the pod log or Kubernetes event.
+  * `POD-ID` is the ID of the pod associated with the pod log or Kubernetes event.
+  * `CONTAINER-NAME` is the deployment associated with the pod log or Kubernetes event.
+
+### <a id='webhook'></a>Webhook Format
+
+The following is a sample webhook `ClusterLogSink` log:
+
+```json
+[
+    {
+        "date": 1554136588.129195,
+        "log": "msg 511 HOURLY-12048\n",
+        "stream": "stdout",
+        "time": "2019-04-01T16:36:28.129195465Z",
+        "kubernetes": {
+            "pod_name": "logspinner-hourly-12048-6f4567c85c-rnmj2",
+            "namespace_name": "blackbox-tests",
+            "pod_id": "9bd76bc6-549b-11e9-b547-42010a001004",
+            "labels": {
+                "pod-template-hash": "6f4567c85c",
+                "run": "logspinner-hourly-12048"
+            },
+            "host": "vm-40f74523-dd72-4a31-550f-27ef630cce9b",
+            "container_name": "logspinner-hourly-12048",
+            "docker_id": "144f77e1a3f35bb7046a036042be9ce802a17ee52d388912f4ea7a277fc92605"
+        }
+    },
+    {
+        "date": 1554136588.629260,
+        "log": "msg 512 HOURLY-12048\n",
+        "stream": "stdout",
+        "time": "2019-04-01T16:36:28.629259669Z",
+        "kubernetes": {
+            "pod_name": "logspinner-hourly-12048-6f4567c85c-rnmj2",
+            "namespace_name": "blackbox-tests",
+            "pod_id": "9bd76bc6-549b-11e9-b547-42010a001004",
+            "labels": {
+                "pod-template-hash": "6f4567c85c",
+                "run": "logspinner-hourly-12048"
+            },
+            "host": "vm-40f74523-dd72-4a31-550f-27ef630cce9b",
+            "container_name": "logspinner-hourly-12048",
+            "docker_id": "144f77e1a3f35bb7046a036042be9ce802a17ee52d388912f4ea7a277fc92605"
+        }
+    }
+]
+```
+
+### <a id="pod-logs"></a>Pod Logs Format
+
+Pod logs entries are distinguished by the string `pod.log` in the `APP-NAME` field.
+
+The following is a sample pod log entry:
+
+<pre>
+36 <14>1 2018-11-26T18:51:41.647825+00:00 cluster-name
+pod.log/rocky-raccoon/logspewer-6b58b6689d-dhddj - - [kubernetes@47450 
+app="logspewer" pod-template-hash="2614622458" namespace_name="rocky-raccoon" 
+object_name="logspewer-6b58b6689d-dhddj" container_name="logspewer"] 
+2018/11/26 18:51:41 Log Message 589910
+</pre>
+
+Where:
+
+  * `cluster-name` is the human-readable cluster name used when creating the cluster
+  * `pod.log` is the `APP-NAME`.
+  * `rocky-raccoon` is the `NAMESPACE`.
+  * `logspewer-6b58b6689d-dhddj` is the `POD-ID`.
+
+### <a id="k8s-api"></a>Kubernetes API Events Format
+
+Kubernetes API Event entries are distinguished by the string `k8s.event` in the `APP-NAME` field.
+
+The following is an example Kubernetes API event log entry:
+
+<pre>
+Nov 14 16:01:49 cluster-name
+k8s.event/rocky-raccoon/logspewer-6b58b6689d-j9n: 
+Successfully assigned rocky-raccoon/logspewer-6b58b6689d-j9nq7 
+to vm-38dfd896-bb21-43e4-67b0-9d2f339adaf1
+</pre>
+
+Where:
+
+  * `cluster-name` is the human-readable cluster name used when creating the cluster
+  * `k8s.event` is the `APP-NAME`.
+  * `rocky-raccoon` is the `NAMESPACE`.
+  * `logspewer-6b58b6689d-j9n` is the `POD-ID`.
+
+#### <a id="important-events"></a> Notable Kubernetes API Events
+
+The following section lists Kubernetes API Events that can help assess any Kubernetes scheduling problems in <%= vars.product_short %>. 
+
+To monitor for these events, look for log entries that contain the <strong>Identifying String</strong> indicated below for each event.
+
+##### <a id="imagepullbackoff"></a> Failure to Retrieve Containers from Registry
+
+<table>
+   <tr><th colspan="2" style="text-align: center;"><br>ImagePullBackOff<br><br></th></tr>
+   <tr>
+      <th width="25%">Description</th>
+      <td>Image pull back offs occur when the Kubernetes API cannot reach a registry to retrieve a container or the container does not exist in the registry. The scheduler might be trying to access a registry that is not available on the network. For example, Docker Hub is blocked by a firewall. Other reasons might include the registry is experiencing an outage or a specified container has been deleted or was never uploaded.</td>
+   </tr>
+   <tr>
+      <th>Identifying String</th>
+      <td><code>Error:ErrImagePull</code></td>
+   </tr>
+   <tr>
+      <th>Example Sink Log Entry</th>
+      <td>
+      <code>Jan 25 10:18:58 gke-bf-test-default-pool-aa8027bc-rnf6 k8s.event/default/test-669d4d66b9-zd9h4/:  Error: ErrImagePull</code>
+      </td>
+   </tr>
+</table>
+
+##### <a id="crashloopbackoff"></a> Malfunctioning Containers
+
+<table>
+   <tr><th colspan="2" style="text-align: center;"><br>CrashLoopBackOff<br><br></th></tr>
+   <tr>
+      <th width="25%">Description</th>
+      <td>Crash loop back offs imply that the container is not functioning as intended. There are several potential causes of crash loop back offs which depend on the related workload. To investigate further, examine the logs for that workload.</td>
+   </tr>
+   <tr>
+      <th>Identifying String</th>
+      <td><code>Back-off restarting failed container</code></td>
+   </tr>
+   <tr>
+      <th>Example Sink Log Entry</th>
+      <td>
+      <code>Jan 25 09:26:44 cluster-name k8s.event/monitoring/cost-analyzer-prometheus-se: Back-off restarting failed container</code>
+      </td>
+   </tr>
+</table>
+
+##### <a id="containercreated"></a> Successful Scheduling of Containers
+
+<table>
+   <tr><th colspan="2" style="text-align: center;"><br>ContainerCreated<br><br></th></tr>
+   <tr>
+      <th width="25%">Description</th>
+      <td>Operators can monitor the creation and successful start of containers to keep track of platform usage at a high level. Cluster users can track this event to monitor the usage of their cluster.</td>
+   </tr>
+   <tr>
+      <th>Identifying String</th>
+      <td><code>Started container</code></td>
+   </tr>
+   <tr>
+      <th>Example Sink Log Entries</th>
+      <td>
+      <code>
+        Jan 25 09:14:55 cluster-name 35.239.18.250 k8s.event/rocky-raccoon/logspewer-6b58b6689d/: Created pod: logspewer-6b58b6689d-sr96t <br/>
+        Jan 25 09:14:55 cluster-name 35.239.18.250 k8s.event/rocky-raccoon/logspewer-6b58b6689d-sr9: Successfully assigned rocky-raccoon/ logspewer-6b58b6689d-sr96t to vm-efe48928-be8e-4db5-772c-426ee7aa52f2 <br/>
+        Jan 25 09:14:55 cluster-name k8s.event/rocky-raccoon/logspewer-6b58b6689d-mkd: Killing container with id docker://logspewer:Need to kill Pod <br/>
+        Jan 25 09:14:56 cluster-name  k8s.event/rocky-raccoon/logspewer-6b58b6689d-sr9: Container image "oratos/logspewer:v0.1" already present on machine <br/>
+        Jan 25 09:14:56 cluster-name  k8s.event/rocky-raccoon/logspewer-6b58b6689d-sr9: Created container <br/>
+        Jan 25 09:14:56 cluster-name  k8s.event/rocky-raccoon/logspewer-6b58b6689d-sr9: Started container <br/>
+      </code>
+      </td>
+   </tr>
+</table>
+
+##### <a id="failedscheduling"></a> Failure to Schedule Containers
+
+<table>
+   <tr><th colspan="2" style="text-align: center;"><br>FailedScheduling<br><br></th></tr>
+   <tr>
+      <th width="25%">Description</th>
+      <td>This event occurs when a container cannot be scheduled. For instance, this may occur due to lack of node resources.</td>
+   </tr>
+   <tr>
+      <th>Identifying String</th>
+      <td><code>Insufficient RESOURCE</code><br>where <code>RESOURCE</code> is a specific type of resource. For example, <code>cpu</code>.</td>
+   </tr>
+   <tr>
+      <th>Example Sink Log Entries</th>
+      <td>
+      <code>
+       Jan 25 10:51:48 gke-bf-test-default-pool-aa8027bc-rnf6 k8s.event/default/test2-5c87bf4b65-7fdtd/: 0/1 nodes are available: 1 Insufficient cpu.
+      </code>
+      </td>
+   </tr>
+</table>
+
+<%# ##<a id='metrics'></a>Metric Sink Resources %>
+
+<%# ###<a id='cluster-metrics'></a>ClusterMetricSink %>
+
+## <a id="related-links"></a> Related Links
+
+For more information about sinks in <%= vars.product_short %>, see the following topics:
+
+* For information about creating sinks in <%= vars.product_short %>, see [Creating Sink Resources](./create-sinks.html).
+* For information about sink architecture, see [Sink Architecture in <%= vars.product_short %>](./sink-architecture.html).
+

@@ -1,0 +1,91 @@
+---
+title: Telemetry
+owner: PKS
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes the VMware Customer Experience Improvement Program (CEIP)
+and the Pivotal Telemetry Program (Telemetry) used in the <%= vars.product_tile %> tile.
+
+## <a id="overview"></a>Overview
+
+The CEIP and Telemetry program allow VMware and Pivotal to collect data from customer installations to improve your <%= vars.product_short %> experience.
+Collecting data at scale enables us to identify patterns and alert you to warning signals in your <%= vars.product_short %> installation.
+
+### <a id="participation"></a>Participation Levels
+
+You can configure <%= vars.product_short %> to use one of the following CEIP and Telemetry participation levels:
+
++ **None:** This level disables data collection.
+
++ **Standard:** (Default) This level collects data anonymously. Your data is used to
+inform the ongoing development of <%= vars.product_short %>.
+
++ **Enhanced:** This level enables VMware and Pivotal to warn you about
+security vulnerabilities and potential issues with your software configurations.
+For more information, see [Benefits of the Enhanced Participation Level](#benefits) below.
+
+<p class="note"><strong>Note:</strong> <%= vars.product_short %> does not collect any personally identifiable information (PII) at either participation level.
+For a list of the data <%= vars.product_short %> collects, see <a href="#data-dictionary">Data Dictionary</a>.</p>
+
+For instructions on configuring CEIP and Telemetry participation, see the [Installing <%= vars.product_short %>](installing.html) topic for your IaaS.
+
+### <a id="benefits"></a> Benefits of the Enhanced Participation Level
+
+Benefits you receive with the Enhanced participation level include but are not limited to the following:
+
+* **Usage data:** This gives you access to data about Kubernetes pod and cluster usage in your <%= vars.product_short %> installation.
+* **Access to your telemetry data:** This gives you access to configuration and usage data about your <%= vars.product_short %> installation.
+* **Proactive support:** This enables VMware and Pivotal to proactively warn you about unhealthy patterns.
+* **Benchmarks:** This is your usage relative to the rest of the <%= vars.product_short %> user base.
+
+The table below compares the Standard and Enhanced participation levels.
+
+<table>
+  <tr>
+    <th>Benefit</th>
+    <th>Standard Level</th>
+    <th>Enhanced Level</th>
+  </tr>
+  <tr>
+    <td>Usage data</td>
+    <td>Raw data</td>
+    <td>Reports and trend analysis</td>
+  </tr>
+  <tr>
+    <td>Access to your telemetry data</td>
+    <td>No</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td>Proactive support</td>
+    <td>No</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td>Benchmarks</td>
+    <td>No</td>
+    <td>Yes</td>
+  </tr>
+</table>
+
+<p class="note"><strong>Note:</strong> VMware and Pivotal reserve the right to change the benefits associated with the Enhanced participation level at any time.</p>
+
+## <a id="system-components"></a> System Components
+
+The CEIP and Telemetry programs use the following components to collect data:
+
++ **Telemetry Server:** This component runs on the PKS control plane. The server receives telemetry events from the PKS API and metrics from Telemetry agent pods. The server sends events and metrics to a data lake for archiving and analysis.
+
++ **Telemetry Agent Pod:** This component runs in each Kubernetes cluster as a deployment with one replica. Agent pods periodically poll the Kubernetes API for cluster metrics and send the metrics to the Telemetry server.
+
+The following diagram shows how telemetry data flows through the system components:
+
+<%# The below diagram can be edited at: https://docs.google.com/presentation/d/1GKYWnT5efjMwyPx23NCoD2VIS-NVzfHDy_6WDyrwgtU/edit?usp=sharing %>
+<a href="images/telemetry-data-flow.png" target="_blank"><img src="images/telemetry-data-flow.png" alt="
+  Telemetry System Data Flow"></a>
+
+## <a id="data-dictionary"></a>Data Dictionary
+
+For information about PKS Telemetry collection and reporting, see the [PKS Telemetry Data](https://drive.google.com/a/pivotal.io/file/d/1j05pLFTymmrxsoztzKEwsST0nC4OpKrN/view?usp=sharing) spreadsheet, hosted on Google Drive.  

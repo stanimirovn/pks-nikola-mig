@@ -1,0 +1,239 @@
+---
+title: Upgrading Enterprise PKS
+owner: PKS
+topictype: vsphereupgrade
+---
+
+<strong><%= modified_date %></strong>
+
+This topic explains how to upgrade <%= vars.product_full %> from v1.4 to v1.5 on vSphere without NSX-T integration,
+Google Cloud Platform (GCP), Amazon Web Services (AWS), and Azure.
+
+For instructions on upgrading <%= vars.product_short %> on vSphere with NSX-T integration, see
+[Upgrading <%= vars.product_short %> with NSX-T](upgrade-pks-nsxt.html).
+
+## <a id="overview"></a>Overview
+
+The supported upgrade paths to <%= vars.product_short %> v1.5.0 are from <%= vars.product_short %> v1.4.x.
+<%= vars.product_short %> v1.5.0 is compatible with  Ops Manager <%= vars.ops_man_version_2_5 %> or  Ops Manager <%= vars.ops_man_version_2_6 %>.
+
+<p class="note warning"><strong>Warning:</strong> Do not manually upgrade your Kubernetes version. <%= vars.product_short %> includes the compatible Kubernetes version.</p>
+
+Before you begin the upgrade, follow the procedures in the [Prerequisites](#before) section to plan and prepare your upgrade.
+
+After you complete the prerequisite steps, continue to the procedures in the [During the Upgrade](#upgrade) section. These steps guide you through the process of upgrading Ops Manager, upgrading the <%= vars.product_tile %> tile, importing an updated stemcell, and applying the changes to your deployment.
+
+After you complete the upgrade, follow the procedures in the [After the Upgrade](#after-upgrade) section to verify that your upgraded <%= vars.product_short %> deployment is running properly.
+
+## <a id="before"></a>Prerequisites
+
+Before you upgrade <%= vars.product_short %>, you must do the following:
+
+1. [Determine Your Upgrade Path](#upgrade-path)
+1. [Prepare to Upgrade](#prepare)
+
+### <a id="upgrade-path"></a> Determine Your Upgrade Path
+
+Use the following table to determine your upgrade path to <%= vars.product_short %> v1.5.
+
+<table>
+<tr>
+  <th>If you want to upgrade <%= vars.product_short %> on Ops Manager ...</th>
+  <th>Then use the following upgrade path:</th>
+</tr>
+<tr>
+  <td>v2.5</td>
+  <td>
+    <ol>
+      <li>Upgrade to Ops Manager <%= vars.ops_man_version_2_5 %>.</li>
+      <li>Upgrade to <%= vars.product_short %> v1.5.</li>
+    </ol>
+  </td>
+</tr>
+<tr>
+  <td>v2.6</td>
+  <td>
+    <ol>
+      <li>Upgrade to Ops Manager <%= vars.ops_man_version_2_6 %>.</li>
+      <p class="note"><strong>Note:</strong> If you want to use Windows workers in <%= vars.product_short %> v1.5,
+      you must upgrade to Ops Manager <%= vars.ops_man_version_2_6 %>.
+      This feature is not supported on Ops Manager v2.5.
+      For more information, see <a href="windows-pks-beta.html">Configuring Windows Worker-Based Clusters (Beta)</a>.
+</p>
+      <li>Upgrade to <%= vars.product_short %> v1.5.</li>
+    </ol>
+  </td>
+</tr>
+</table>
+
+### <a id="prepare"></a>Prepare to Upgrade
+
+If you have not already, complete all of the steps in the
+[Upgrade Preparation Checklist for <%= vars.product_short %> v1.5](./checklist.html).
+
+## <a id="upgrade"></a> During the Upgrade
+
+This section describes the steps required to upgrade to <%= vars.product_short %> v1.5:
+
+1. [Upgrade to Ops Manager <%= vars.ops_man_version_2_5_short %> or <%= vars.ops_man_version_2_6_short %>](#upgrade-opsman)
+1. [Upgrade to <%= vars.product_short %> v1.5](#upgrade-tile)
+1. [Download and Import the Stemcell](#stemcell)
+1. [Verify Errand Configuration](#errands)
+1. [Apply Changes to the <%= vars.product_tile %> Tile](#apply-changes)
+
+### <a id="upgrade-opsman"></a>Upgrade Ops Manager to <%= vars.ops_man_version_2_5_short %> or <%= vars.ops_man_version_2_6_short %>
+
+Before you upgrade to <%= vars.product_short %> v1.5, you must upgrade to Ops Manager <%= vars.ops_man_version_2_5 %> or <%= vars.ops_man_version_2_6 %>.
+
+To upgrade Ops Manager, do the following:
+
+1. Complete the procedures in [Import Installation to Ops Manager v2.5 VM](https://docs.pivotal.io/pivotalcf/2-5/customizing/upgrading-pcf.html#upgrade)
+or [Import Installation to Ops Manager v2.6 VM](https://docs.pivotal.io/pivotalcf/2-6/customizing/upgrading-pcf.html#upgrade).
+
+1. <%= partial 'add-clusters-workloads' %>
+
+### <a id="upgrade-tile"></a>Upgrade <%= vars.product_short %> to v1.5
+
+When you upgrade <%= vars.product_short %>,
+your configuration settings typically migrate to the new version automatically. To perform an upgrade:
+
+1. Review the [Release Notes](release-notes.html) for the version you are upgrading to.
+
+1. Download the desired version of the product from [Pivotal Network](https://network.pivotal.io/products/pivotal-container-service/).
+
+1. Navigate to the Ops Manager Installation Dashboard and click **Import a Product** to upload the product file.
+
+1. Under the **Import a Product** button, click **+** next to **<%= vars.product_tile %>**. This adds the tile to your staging area.
+
+### <a id="stemcell"></a>Download and Import the Stemcell
+
+<%= vars.product_short %> requires a [Xenial stemcell](https://docs.pivotal.io/pivotalcf/stemcells/#xenial).
+
+If Ops Manager does not have the Xenial stemcell required for <%= vars.product_short %>,
+the <%= vars.product_tile %> tile displays the message **Missing stemcell**.
+
+<p class="note"><strong>Note:</strong> If the <b>Stemcell Library</b> in Ops Manager already has a compatible Xenial stemcell,
+the <b>Missing stemcell</b> link does not appear. You do not need to download or import a new stemcell and can skip this step.</p>
+
+To download and import a new Xenial stemcell, follow the steps below:
+
+1. On the <%= vars.product_tile %> tile, click the **Missing stemcell** link.
+
+    <img src="images/missing_stemcell.png" alt="Verify stemcell assignment">
+
+1. In the **Stemcell Library**, locate the **<%= vars.product_tile %>** tile and note the required stemcell version.
+
+1. Navigate to the [Stemcells for PCF (Ubuntu Xenial)](https://network.pivotal.io/products/stemcells-ubuntu-xenial/) page on Pivotal Network
+and download the required stemcell version for your IaaS.
+
+1. Return to the **Installation Dashboard** in Ops Manager and click **Stemcell Library**.
+
+1. On the **Stemcell Library** page, click **Import Stemcell** and select the stemcell file you downloaded from Pivotal Network.
+
+1. Select the <%= vars.product_tile %> tile and click **Apply Stemcell to Products**.
+
+1. Verify that Ops Manager successfully applied the stemcell. The stemcell version you imported and applied appears in the **Staged** column for <%= vars.product_tile %>.
+
+1. Select the **Installation Dashboard** link to return to the Installation Dashboard.
+
+<p class="note"><strong>Note:</strong> If you use vSphere with Flannel, after upgrading to <%= vars.product_short %> v1.5
+you will have the option to create Windows worker-based clusters. Windows worker-based clusters require an additional stemcell.
+For more information about Windows worker-based clusters,
+see <a href="windows-pks-beta.html">Configuring Windows Worker-Based Clusters (Beta)</a>.</p>
+
+### <a id="telemetry"></a>Verify CEIP and Telemetry Configuration
+
+The VMware Customer Experience Improvement Program (CEIP)
+and the Pivotal Telemetry Program (Telemetry) are enabled in <%= vars.product_short %> v1.5 by default.
+
+If you do not want to participate in CEIP and Telemetry,
+you must set your participation level to **None** in the <%= vars.product_tile %> tile.
+To set your participation level to **None**:
+
+1. Click the newly-added <%= vars.product_tile %> tile.
+1. Click **CEIP and Telemetry**.
+1. Under **Please select your participation level in the CEIP and Telemetry program**, set your participation level to **None**.
+1. Click **Save**.
+
+For more information about configuring your participation level,
+see [CEIP and Telemetry](installing-pks-vsphere.html#telemetry) in the _Installing_ topic for your IaaS.
+
+### <a id="errands"></a>Verify Errand Configuration
+
+To verify that errands are configured correctly in the <%= vars.product_tile %> tile, do the following:
+
+1. In the **<%= vars.product_tile %>** tile, click **Errands**.
+
+1. Under **Post-Deploy Errands**, configure **Upgrade all clusters errand**:
+  * If you want to upgrade the <%= vars.product_tile %> tile and all your existing Kubernetes clusters simultaneously,
+  verify that **Upgrade all clusters errand** is set to **Default (On)**.
+  The errand upgrades a single Kubernetes cluster at a time.
+  Upgrading <%= vars.product_short %>-deployed Kubernetes clusters can temporarily interrupt the service
+  as described in [Service Interruptions](interruptions.html).
+  * If you want to upgrade the <%= vars.product_tile %> tile only and
+  then upgrade your existing Kubernetes clusters separately, disable **Upgrade all clusters errand**.
+  For more information, see [Upgrading Clusters](upgrade-clusters.html).
+  <p class="note warning"><strong>Warning:</strong> If you upgrade the <%= vars.product_tile %> tile
+  or update your tile configuration, with <strong>Upgrade all clusters errand</strong> disabled,
+  you must upgrade all your Kubernetes clusters before the next upgrade or configuration update.</p>
+
+1. Under **Post-Deploy Errands**, set the **Run smoke tests** errand to **On**. The errand uses the <%= vars.product_short %> Command Line Interface (PKS CLI) to create a Kubernetes cluster and then delete it. If the creation or deletion fails, the errand fails and the installation of the <%= vars.product_tile %> tile is aborted.
+
+1. Click **Save**.
+
+1. Review the other configuration panes. Click **Save** on any panes where you make changes.
+    <p class="note"><strong>Note:</strong> When you upgrade <%= vars.product_short %>, you must place singleton jobs in the AZ you selected when you first installed the <%= vars.product_tile %> tile. You cannot move singleton jobs to another AZ.</p>
+
+### <a id="apply-changes"></a>Apply Changes to the <%= vars.product_tile %> Tile
+
+To complete the upgrade of the <%= vars.product_tile %> tile:
+
+1. Return to the **Installation Dashboard** in Ops Manager.
+
+1. Click **Review Pending Changes**.
+     For more information about this Ops Manager page, see
+    [Reviewing Pending Product Changes](https://docs.pivotal.io/pivotalcf/2-3/customizing/review-pending-changes.html).
+
+1. Click **Apply Changes**.
+
+1. (Optional) To monitor the progress of the **Upgrade all clusters errand** using the BOSH CLI, do the following:
+      1. Log in to the BOSH Director by running `bosh -e MY-ENVIRONMENT log-in` from a VM that can access your <%= vars.product_short %> deployment. For more information, see [Managing <%= vars.product_short %> Deployments with BOSH](manage-deployments-bosh.html).
+      1. Run `bosh -e MY-ENVIRONMENT tasks`.
+      1. Locate the task number for the errand in the <strong>&#35;</strong> column of the BOSH output.
+      1. Run `bosh task TASK-NUMBER`, replacing `TASK-NUMBER` with the task number you located in the previous step.
+
+## <a id="after-upgrade"></a>After the Upgrade
+
+After you complete the upgrade to <%= vars.product_short %> v1.5, complete the following verifications and upgrades:
+
+- [Update PKS and Kubernetes CLIs](#update-clis)
+- [Verify the Upgrade](#verify-upgrade)
+- [Upgrade vSphere](#upgrade-vcenter)
+
+### <a id="update-clis"></a>Update PKS and Kubernetes CLIs
+
+Update the PKS and Kubernetes CLIs on any local machine
+where you run commands that interact with your upgraded version of <%= vars.product_short %>.
+
+To update your CLIs, download and re-install the PKS and Kubernetes CLI distributions
+that are provided with <%= vars.product_short %> on Pivotal Network.
+
+For more information about installing the CLIs, see the following topics:
+
+* [Installing the PKS CLI](installing-pks-cli.html)
+
+* [Installing the Kubernetes CLI](installing-kubectl-cli.html)
+
+### <a id="verify-upgrade"></a>Verify the Upgrade
+
+After you apply changes to the <%= vars.product_tile %> tile and the upgrade is complete, perform the following steps:
+
+1. Verify that your Kubernetes environment is healthy. To verify the health of your Kubernetes environment, see [Verifying
+Deployment Health](verify-health.html#k8s).
+
+1. <%= partial 'add-clusters-workloads' %>
+
+### <a id="upgrade-vcenter"></a>(Optional) Upgrade vSphere
+
+If you are deploying <%= vars.product_short %> on vSphere, consult the chart below and upgrade vSphere if necessary.
+<%= partial 'vsphere_versions' %>

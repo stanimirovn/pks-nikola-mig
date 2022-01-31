@@ -1,0 +1,97 @@
+---
+title: Using Helm with Enterprise PKS
+owner: PKS
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes how to use the package manager [Helm](https://helm.sh/) for your
+Kubernetes apps running on <%= vars.product_full %>.
+
+##<a id='overview'></a> Overview
+
+Helm includes the following components:
+
+<table>
+  <tr>
+    <th>Component</th>
+    <th>Role</th>
+    <th>Location</th>
+  </tr>
+  <tr>
+    <td><code>helm</code></td>
+    <td>Client</td>
+    <td>Runs on your local workstation</td>
+  </tr>
+  <tr>
+    <td><code>tiller</code></td>
+    <td>Server</td>
+    <td>Runs inside your Kubernetes cluster</td>
+  </tr>
+</table>
+
+Helm packages are called **charts**. For more information, see
+[Charts](https://docs.helm.sh/developing_charts/) in the Helm documentation.
+
+Examples of charts:
+
+* [Concourse](https://github.com/kubernetes/charts/tree/master/stable/concourse) for CI/CD pipelines
+* [Datadog](https://github.com/kubernetes/charts/tree/master/stable/datadog) for monitoring
+* [MySQL](https://github.com/kubernetes/charts/tree/master/stable/mysql) for storage
+
+For more charts, see the [Helm Charts repository](https://github.com/kubernetes/charts) on GitHub.
+
+##<a id='configure-tiller'></a> Configure Tiller
+
+If you want to use Helm with <%= vars.product_short %>, you must configure Tiller.
+
+Tiller runs inside the Kubernetes cluster and requires access to the Kubernetes API.
+
+If you use role-based access control (RBAC) in <%= vars.product_short %> to grant
+Tiller permission to access the API, do the following: 
+
+1. Create a file named `rbac-config.yaml` with the following configuration:
+
+    ```yaml
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: tiller
+      namespace: kube-system
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1beta1
+    kind: ClusterRoleBinding
+    metadata:
+      name: tiller
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: cluster-admin
+    subjects:
+      - kind: ServiceAccount
+        name: tiller
+        namespace: kube-system
+    ```
+    
+1. Create the service account and role by running the following command:
+  
+    ```
+    kubectl create -f rbac-config.yaml
+    ```
+
+1. Download and install the [Helm CLI](https://github.com/kubernetes/helm/releases).
+
+1. Deploy Helm using the service account by running the following command:
+    
+    ```
+    helm init --service-account tiller
+    ```
+
+1. Verify that the permissions are configured by running the following command: 
+      
+    ```
+    helm ls
+    ``` 
+    There should be no output from the above command.
+
+To apply more granular permissions to the Tiller service account, see the [Helm RBAC](https://github.com/kubernetes/helm/blob/master/docs/rbac.md) documentation.

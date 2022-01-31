@@ -1,0 +1,262 @@
+---
+title: Managing Resource Usage
+owner: PKS
+---
+
+<strong><%= modified_date %></strong>
+
+<%= partial 'beta-component' %>
+
+This topic describes how to manage and monitor resource utilization in <%= vars.product_full %> 
+using the PKS API.  
+
+As a <%= vars.product_short %> administrator, you can set a maximum limit on each user's total VM resource allocation.  
+
+PKS API quota commands provide a way for you to restrict a user's total allocated VM memory size and CPU count. 
+Using the PKS API you can create rules, review rules and review users' current total utilization. 
+
+<p class="note"><strong>Note</strong>: Quota limitations affect only non-admin user accounts. 
+A quota applied to an admin user account is ignored.</p>
+
+<%= partial 'beta-component' %>
+
+## <a id='quota-admin'></a> Set up Your API Access Token
+
+The PKS Quota and Resource API commands in this topic use an access
+token environment variable.
+
+<%= partial 'create-auth-token-var' %>
+
+## <a id='quota-admin'></a> Manage Quota Limitations
+
+This section describes how to add, modify and delete user quotas.
+
+### <a id='quota-add'></a> Add a Quota
+
+To enforce a quota on a specific user, run the following command:
+
+```
+curl -k -X POST \
+-H "Authorization: Bearer $YOUR_ACCESS_TOKEN" \
+-H "Content-Type: application/json" \
+-d \
+'{ 
+    "owner": "USER-ID",
+    "limit": { 
+      "cpu": MAX-CPU, 
+      "memory": MAX-MEM 
+      } 
+    }' \
+https://PKS-API:9021/v1beta1/quotas
+```
+
+Where:
+
+* `YOUR_ACCESS_TOKEN` is your access token environment variable.
+* `USER-ID` is the user account ID to enforce the quota restriction on.
+* `MAX-CPU` is the maximum total amount of CPU resources the user can allocate to containers and pods.
+* `MAX-MEM` is the maximum total amount of memory, in gigabytes, the user can allocate to containers and pods.
+* `PKS-API` is the FQDN of your PKS API endpoint. 
+
+For example:
+<pre class="terminal">
+$ user=exampleuser
+$ pks login -a pks.my.lab -u $user -p 'psswrdabc123...!' -k; export TOKEN=$(bosh int ~/.pks/creds.yml --path /access_token)
+$ curl -k -X POST \
+-H "Authorization: Bearer $TOKEN" \
+-H "Content-Type: application/json" \
+-d \
+'{
+    "owner": "cody",
+    "limit": {
+        "cpu": 4,
+        "memory": 5
+    }
+  }' \
+https&#58;//example.com&#58;9021/v1beta1/quotas
+</pre>
+
+### <a id='quota-modify'></a> Modify an Existing Quota
+
+To modify a specific user's existing quota, run the following command:
+
+```
+curl -k -X PATCH  \ 
+-H "Authorization: Bearer $YOUR_ACCESS_TOKEN" \
+-H "Content-Type: application/json" \
+-d \
+'{ 
+    "owner": "USER-ID", 
+    "limit": { 
+      "cpu": MAX-CPU, 
+      "memory": MAX-MEM 
+      } 
+    }' \
+https://PKS-API:9021/v1beta1/quotas/USER-ID
+```
+
+Where:
+
+* `YOUR_ACCESS_TOKEN` is your access token environment variable.
+* `USER-ID` is the user account ID to enforce the quota restriction on.
+* `MAX-CPU` is the maximum total amount of CPU resources the user can allocate to containers and pods.
+* `MAX-MEM` is the maximum total amount of memory, in gigabytes, the user can allocate to containers and pods.
+* `PKS-API` is the FQDN of your PKS API endpoint. For example, `api.pks.example.com`.
+
+For example:
+<pre class="terminal">
+$ user=exampleuser
+$ pks login -a pks.my.lab -u $user -p 'psswrdabc123...!' -k; export TOKEN=$(bosh int ~/.pks/creds.yml --path /access_token)
+$ curl -k -X PATCH \
+-H "Authorization: Bearer $TOKEN" \
+-H "Content-Type: application/json" \
+-d \
+'{ 
+    "owner": "cody", 
+    "limit": {  
+        "cpu": 4, 
+        "memory": 5 
+    }
+  }' \
+https&#58;//example.com&#58;9021/v1beta1/quotas/$user
+</pre>
+
+### <a id='quota-delete'></a> Delete a Quota
+
+To delete a specific user's existing quota, run the following command:
+
+```
+curl -k -X DELETE -H "Authorization: Bearer $YOUR_ACCESS_TOKEN" \
+https://PKS-API:9021/v1beta1/quotas/USER-ID
+```
+
+Where:
+
+* `YOUR_ACCESS_TOKEN` is your access token environment variable.
+* `PKS-API` is the FQDN of your PKS API endpoint.
+* `USER-ID` is the user account ID to enforce the quota restriction on.
+
+For example:
+<pre class="terminal">
+$ user=exampleuser
+$ pks login -a pks.my.lab -u $user -p 'psswrdabc123...!' -k; export TOKEN=$(bosh int ~/.pks/creds.yml --path /access_token)
+$ curl -k -X DELETE -H "Authorization: Bearer $TOKEN" https&#58;//example.com&#58;9021/v1beta1/quotas/$user
+$ curl -k -X DELETE -H "Authorization: Bearer $TOKEN" https&#58;//example.com&#58;9021/v1beta1/quotas/$user
+{
+  "body":"The quota owner named: \"exampleuser\" not found."
+}
+</pre>
+
+## <a id='quota-view-admin'></a> View Quotas
+
+The PKS API `quotas` command reports resource utilization quotas as JSON.
+
+To list the resource quota restrictions currently applied to a single user, run the following command:
+
+```
+curl -k -H "Authorization: Bearer $YOUR_ACCESS_TOKEN" \
+https://PKS-API:9021/v1beta1/quotas/USER-ID
+```
+
+Where:
+
+* `YOUR_ACCESS_TOKEN` is your access token environment variable.
+* `PKS-API` is the FQDN of your PKS API endpoint. 
+* `USER-ID` is the user account ID to report on.  
+
+For example:
+<pre class="terminal">
+$ user=exampleuser
+$ pks login -a pks.my.lab -u $user -p 'psswrdabc123...!' -k; export TOKEN=$(bosh int ~/.pks/creds.yml --path /access_token)
+$ curl -k -H "Authorization: Bearer $TOKEN" \
+https&#58;//example.com&#58;9021/v1beta1/quotas/$user 
+{
+  "owner":"cody",
+  "limit":{
+      "cpu":2,
+      "memory":1.0
+  }
+}
+</pre>
+
+
+To list all current resource quota restrictions, run the following command:
+
+```
+curl -k -H "Authorization: Bearer $YOUR_ACCESS_TOKEN" \
+https://PKS-API:9021/v1beta1/quotas
+```
+
+Where:
+
+* `YOUR_ACCESS_TOKEN` is your access token environment variable.
+* `PKS-API` is the FQDN of your PKS API endpoint.
+
+For example:
+<pre class="terminal">
+$ user=exampleuser
+$ pks login -a pks.my.lab -u $user -p 'psswrdabc123...!' -k; export TOKEN=$(bosh int ~/.pks/creds.yml --path /access_token)
+$ curl -k -H "Authorization: Bearer $TOKEN" \
+https&#58;//example.com&#58;9021/v1beta1/quotas
+[
+  {
+    "owner":"cody",
+    "limit":{
+        "cpu":2,
+        "memory":1.0
+    }
+  }
+]
+</pre>  
+
+## <a id='utilization-view-admin'></a> View Usage
+
+The PKS API `usages` command reports resource utilization as JSON.
+
+To list the current resource utilization for a single user, run the following command:
+
+```
+curl -k -H "Authorization: Bearer $YOUR_ACCESS_TOKEN" https://PKS-API:9021/v1beta1/usages/USER-ID
+```
+
+Where:
+
+* `YOUR_ACCESS_TOKEN` is your access token environment variable.
+* `PKS-API` is the FQDN of your PKS API endpoint.
+* `USER-ID` is the user account ID whose resource utilization you want to view.  
+
+To list the current resource utilization for all users, run the following command:
+
+```
+curl -k -H "Authorization: Bearer $YOUR_ACCESS_TOKEN" \
+https://PKS-API:9021/v1beta1/usages
+```
+
+Where:
+
+* `YOUR_ACCESS_TOKEN` is your authentication token environment variable.
+* `PKS-API` is the FQDN of your PKS API endpoint.
+
+For example:
+<pre class="terminal">
+$ user=exampleuser
+$ pks login -a pks.my.lab -u $user -p 'psswrdabc123...!' -k; export TOKEN=$(bosh int ~/.pks/creds.yml --path /access_token)
+$ curl -k -H "Authorization: Bearer $TOKEN" \
+https&#58;//example.com&#58;9021/v1beta1/usages
+[
+  {
+    "owner": "cody",
+    "totals": {
+      "cpu": 20,
+      "memory": 52
+    },
+    "clusters": [
+      {
+        "name": "vsp1",
+        "cpu": 12,
+        "memory": 36
+      }
+    ]
+  }
+]
+</pre>

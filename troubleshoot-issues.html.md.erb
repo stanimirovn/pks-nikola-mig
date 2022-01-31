@@ -1,0 +1,523 @@
+---
+title: Troubleshooting
+owner: PKS
+---
+
+<strong><%= modified_date %></strong>
+
+##<a id='api-timeout'></a>PKS API is Slow or Times Out
+
+**Symptom**
+
+When you run PKS CLI commands, the PKS API times out or is slow to respond.
+
+**Explanation**
+
+The PKS API control plane VM requires more resources.
+
+**Solution**
+
+1. Navigate to `https://YOUR-OPS-MANAGER-FQDN/` in a browser to log in to the Ops Manager Installation Dashboard.
+
+1. Select the **<%= vars.product_tile %>** tile.
+
+1. Select the **Resource Config** page.
+
+1. For the **PKS API** job, select a **VM Type** with greater CPU and memory resources.
+
+1. Click **Save**.
+
+1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
+
+1. Click **Review Pending Changes**. Review the changes that you made. For more
+information, see [Reviewing Pending Product Changes](https://docs.pivotal.io/pivotalcf/customizing/review-pending-changes.html).
+1. Click **Apply Changes**.
+
+##<a id='cluster-operation-fails'></a>All Cluster Operations Fail
+
+**Symptom**
+
+All PKS CLI cluster operations fail including attempts to create or delete clusters
+with `pks create-cluster` and `pks delete-cluster`.
+
+The output of `pks cluster CLUSTER-NAME` contains `Last Action State: error`, and
+the output of `bosh -e ENV-ALIAS -d SERVICE-INSTANCE vms` indicates that the `Process State`
+of at least one deployed node is `failing`.
+
+**Explanation**
+
+If any deployed master or worker nodes run out of disk space in `/var/vcap/store` ,
+all cluster operations such as the creation or deletion of clusters will fail.
+
+**Diagnostics**
+
+To confirm that there is a disk space issue, check recent BOSH activity for any disk space error messages.
+
+1. Log in to the BOSH Director and run `bosh tasks`.
+  The output from `bosh tasks` provides details about the tasks that the BOSH Director has run.
+  See [Managing <%= vars.product_short %> Deployments with BOSH](manage-deployments-bosh.html) for more information about logging in to the BOSH Director.
+
+1. In the BOSH command output, locate a task that attempted to perform a cluster operation, such as cluster creation or deletion.
+
+1. To retrieve more information about the task, run the following command:
+
+    ```
+    bosh -e MY-ENVIRONMENT task TASK-NUMBER
+    ```
+    Where:
+    * `MY-ENVIRONMENT` is the name of your BOSH environment.
+    * `TASK-NUMBER` is the number of the task that attempted to create the cluster.
+    <br>
+    For example:
+    <pre class="terminal">$ bosh -e pks task 23</pre>
+
+1. In the output, look for the following text string:
+
+    ```
+    no space left on device
+    ```
+
+1. Check the health of your deployed Kubernetes clusters by following
+the procedure in [Verifying Deployment Health](verify-health.html).
+
+1. In the output of `bosh -e ENV-ALIAS -d SERVICE-INSTANCE vms`,
+look for any nodes that display `failing` as their `Process State`. For example:
+
+    <pre class="terminal">
+    Instance                                     Process State  AZ       IPs         VM CID                                   VM Type  Active
+    master/3a3adc92-14ce-4cd4-a12c-6b5eb03e33d6  failing        az-1     10.0.11.10  vm-09027f0e-dac5-498e-474e-b47f2cda614d  small    true
+    </pre>
+
+1. Make a note of the plan assigned to the failing node.
+
+**Solution**
+
+1. In the <%= vars.product_short %> tile, locate the plan assigned to the failing node.
+
+1. In the plan configuration, select a larger VM type for the plan's master or worker nodes or both.
+
+    For more information about scaling existing clusters by changing the VM types, see
+[Scale Vertically by Changing Cluster Node VM Sizes in the PKS Tile](scale-clusters.html#scale-vertical).
+
+##<a id='cluster-create-fail'></a>Cluster Creation Fails
+
+
+**Symptom**
+
+When creating a cluster, you run `pks cluster CLUSTER-NAME` to monitor the cluster creation status.
+In the command output, the value for **Last Action State** is `error`.
+
+**Explanation**
+
+There was an error creating the cluster.
+
+**Diagnostics**
+
+1. Log in to the BOSH Director and run `bosh tasks`.
+  The output from `bosh tasks` provides details about the tasks that the BOSH Director has run.
+  See [Managing <%= vars.product_short %> Deployments with BOSH](manage-deployments-bosh.html) for more information about logging in to the BOSH Director.
+
+1. In the BOSH command output, locate the task that attempted to create the cluster.
+
+1. To retrieve more information about the task, run the following command:
+
+    ```
+    bosh -e MY-ENVIRONMENT task TASK-NUMBER
+    ```
+    Where:
+    * `MY-ENVIRONMENT` is the name of your BOSH environment.
+    * `TASK-NUMBER` is the number of the task that attempted to create the cluster.
+    <br>
+    For example:
+    <pre class="terminal">$ bosh -e pks task 23</pre>
+
+BOSH logs are used for error diagnostics but if the issue you see in the BOSH logs is related to using or managing Kubernetes, you should consult the [Kubernetes Documentation](https://kubernetes.io/docs/home/?path=users&persona=app-developer&level=foundational) for troubleshooting that issue.
+
+For troubleshooting failed BOSH tasks, see the [BOSH documentation](https://bosh.io/docs/cli-v2#task-mgmt).
+
+
+##<a id='cluster-delete-fail'></a>Cluster Deletion Fails
+
+**Symptom**
+
+When attempting to delete a cluster using `pks delete-cluster CLUSTER-NAME`, the cluster is not deleted.
+
+**Explanation**
+
+There was an error deleting the cluster.
+
+**Solution**
+
+Log in to the BOSH Director and delete the BOSH deployment manually, then retry the `pks delete-cluster` operation.
+
+1. Log in to the BOSH Director and obtain the deployment name for cluster you want to delete.
+For instructions, see [Managing <%= vars.product_short %> Deployments with BOSH](manage-deployments-bosh.html).
+
+1. Run the following BOSH command:
+
+    ```
+    bosh -e MY-ENVIRONMENT delete-deployment -d DEPLOYMENT-NAME
+    ```
+    Where:
+    * `MY-ENVIRONMENT` is the name of your BOSH environment.
+    * `DEPLOYMENT-NAME` is the name of your BOSH deployment.
+    <p class="note"><strong>Note</strong>: If necessary, you can append the <code>--force</code> flag to delete the deployment.</p>
+
+2. Run the following PKS command:
+
+    ```
+    pks delete-cluster CLUSTER-NAME
+    ```
+    Where `CLUSTER-NAME` is the name of your <%= vars.product_short %> cluster.
+
+
+##<a id='win-stemcell-create-fail'></a>Windows Stemcell for vSphere Creation Fails with Login Issue
+
+**Symptom**
+
+The `stembuild construct` command fails with error: `Cannot complete login due to an incorrect user name or password.`
+
+**Explanation**
+
+Your vCenter login contains special characters, or you have `GOVC` environment variables set locally.
+
+**Solution**
+
+For special characters, see [Authentication Error with Special Characters in stembuild Commands](https://docs.pivotal.io/application-service-windows/2-10/create-vsphere-stemcell-automatically.html#special-characters), in the TAS for VMs [Windows] documentation.
+
+For `GOVC` variables, follow the steps to unset the variables in [Step 4: Construct the BOSH Stemcell](https://docs.pivotal.io/application-service-windows/2-10/create-vsphere-stemcell-automatically.html#construct-stemcell), in the TAS for VMs [Windows] documentation.
+
+
+##<a id='cluster-recreate-fails'></a>Cannot Re-Create a Cluster that Failed to Deploy
+
+**Symptom**
+
+After cluster creation fails, you cannot re-run `pks create-cluster` to attempt
+creating the cluster again.
+
+**Explanation**
+
+<%= vars.product_short %> does not automatically clean up the failed BOSH deployment. Running `pks
+create-cluster` using the same cluster name creates a name clash error in BOSH.
+
+**Solution**
+
+Log in to the BOSH Director and delete the BOSH deployment manually, then retry the `pks delete-cluster` operation. After cluster deletion succeeds, re-create the cluster.
+
+1. Log in to the BOSH Director and obtain the deployment name for cluster you want to delete. For instructions, see [Managing <%= vars.product_short %> Deployments with BOSH](manage-deployments-bosh.html).
+
+1. Run the following BOSH command:
+
+    ```
+    bosh -e MY-ENVIRONMENT delete-deployment -d DEPLOYMENT-NAME
+    ```
+    Where:
+    * `MY-ENVIRONMENT` is the name of your BOSH environment.
+    * `DEPLOYMENT-NAME` is the name of your BOSH deployment.
+    <p class="note"><strong>Note</strong>: If necessary, you can append the <code>--force</code> flag to delete the deployment.</p>
+
+2. Run the following PKS command:
+
+    ```
+    pks delete-cluster CLUSTER-NAME
+    ```
+    Where `CLUSTER-NAME` is the name of your <%= vars.product_short %> cluster.
+
+1. To re-create the cluster, run the following PKS command:
+
+    ```o
+    pks create-cluster CLUSTER-NAME
+    ```
+    Where `CLUSTER-NAME` is the name of your <%= vars.product_short %> cluster.
+
+##<a id="timeouts"></a>Cannot Access Add-On Features or Functions
+
+**Symptom**
+
+You cannot access a feature or function provided by a Kubernetes add-on.
+
+Examples include the following:
+
+- You cannot access the Kubernetes [Web UI (Dashboard)](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/) in a browser or using the kubectl command-line tool.
+- Pods cannot resolve DNS names, and error messages report the service `kube-dns` is invalid. If `kube-dns` is not deployed, the cluster typically fails to start.
+- [Heapster](https://github.com/kubernetes/heapster) does not start.
+
+**Explanation**
+
+The Kubernetes features and functions listed above are provided by the following <%= vars.product_short %> add-ons:
+
+* **Kubernetes Dashboard** `kubernetes-dashboard`
+* **DNS Resolution**: `kube-dns`
+* **Heapster**: `heapster`
+  <p class='note'><strong>Note:</strong> Heapster is deprecated in <%= vars.product_short %> v1.3, and Kubernetes has
+  retired Heapster. For more information, see the
+  <a href="https://github.com/kubernetes-retired/heapster">kubernetes-retired/heapster</a>
+  repository in GitHub.</p>
+
+To enable these add-ons, Ops Manager must run scripts after deploying <%= vars.product_short %>. You must configure Ops Manager to automatically run these post-deploy scripts.
+
+**Solution**
+
+Perform the following steps to configure Ops Manager to run post-deploy scripts to deploy the missing add-ons to your cluster.
+
+1. Navigate to `https://YOUR-OPS-MANAGER-FQDN/` in a browser to log in to the Ops Manager Installation Dashboard.
+
+1. Click the **BOSH Director** tile.
+
+1. Select **Director Config**.
+
+1. Select **Enable Post Deploy Scripts**.
+  <p class="note"><strong>Note</strong>: This setting enables post-deploy scripts for all tiles in your Ops Manager installation.</p>
+
+1. Click **Save**.
+
+1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
+
+1. Click **Review Pending Changes**. Review the changes that you made. For more
+information, see [Reviewing Pending Product Changes](https://docs.pivotal.io/pivotalcf/customizing/review-pending-changes.html).
+
+1. Click **Apply Changes**.
+
+1. After Ops Manager finishes applying changes, enter `pks delete-cluster` on the command line to delete the cluster. For more information, see [Deleting Clusters](delete-cluster.html).
+
+1. On the command line, enter `pks create-cluster` to recreate the cluster. For more information, see [Creating Clusters](create-cluster.html).
+
+##<a id='vsphere-ha-permissions'></a>Resurrecting VMs Causes Incorrect Permissions in vSphere HA
+
+**Symptoms**
+
+Output resulting from the `bosh vms` command alternates between showing that the VMs are `failing` and showing that the VMs are `running`. The operator must run the `bosh vms` command multiple times to see this cycle.
+
+**Explanation**
+
+The VMs' permissions are altered during the restarting of the VM so operators have to reset permissions every time the VM reboots or is redeployed.
+
+VMs cannot be successfully resurrected if the resurrection state of your VM is set to `off` or if the the vSphere HA restarts the VM before BOSH is aware that the VM is down.
+For more information about VM resurrection, see [Resurrection](https://bosh.io/docs/sysadmin-commands/#vm-resurrection) in the Cloud Foundry BOSH documentation.
+
+**Solution**
+
+Run the following command on all of your master and worker VMs:
+
+`bosh -environment BOSH-DIRECTOR-NAME -deployment DEPLOYMENT-NAME ssh INSTANCE-GROUP-NAME -c "sudo /var/vcap/jobs/kube-controller-manager/bin/pre-start; sudo /var/vcap/jobs/kube-apiserver/bin/post-start"`
+
+Where:
+
++ `BOSH-DIRECTOR-NAME` is your BOSH Director name.
++ `DEPLOYMENT-NAME` is the name of your BOSH deployment.
++ `INSTANCE-GROUP-NAME` is the name of the BOSH instance group you are referencing.
+
+The above command, when applied to each VM, gives your VMs the correct permissions.
+
+##<a id='upgrade-drain-hangs'></a> Worker Node Hangs Indefinitely
+
+**Symptoms**
+
+After making your selection in the **Upgrade all clusters errand** section, the worker node might hang indefinitely.
+For more information about monitoring the **Upgrade all clusters errand** using the BOSH CLI, see [Upgrade the PKS Tile](upgrade-pks.html#upgrade-tile) in _Upgrading <%= vars.product_short %>_.
+
+**Explanation**
+
+During the <%= vars.product_tile %> tile upgrade process, worker nodes are cordoned and drained. This drain is dependent on Kubernetes being able to unschedule all pods. If Kubernetes is unable to unschedule a pod, then the drain hangs indefinitely.
+Kubernetes may be unable to unschedule the node if the `PodDisruptionBudget` object has been configured to permit zero disruptions and only a single instance of the pod has been scheduled.
+
+In your spec file, the `.spec.replicas` configuration sets the total amount of replicas that are available in your app.
+`PodDisruptionBudget` objects specify the amount of replicas, proportional to the total, that must be available in your app, regardless of downtime. Operators can configure `PodDisruptionBudget` objects for each app using their spec file.
+
+Some apps deployed using Helm charts might have a default `PodDisruptionBudget` set.
+For more information on configuring `PodDisruptionBudget` objects using a spec file, see [Specifying a PodDisruptionBudget](https://kubernetes.io/docs/tasks/run-application/configure-pdb/) in the Kubernetes documentation.
+
+If `.spec.replicas` is configured correctly, you can also configure the default node drain behavior to prevent cluster upgrades from hanging or failing.
+
+**Solution**
+
+To resolve this issue, do one of the following:
+
++ Configure `.spec.replicas` to be greater than the `PodDisruptionBudget` object.<br><br>
+    When the number of replicas configured in `.spec.replicas` is greater than the number of replicas set in the `PodDisruptionBudget` object, disruptions can occur.
+    <br><br>
+    For more information, see [How Disruption Budgets Work](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/#how-disruption-budgets-work) in the Kubernetes documentation.<br>
+    For more information about workload capacity and uptime requirements in <%= vars.product_short %>, see [Prepare to Upgrade](upgrade-pks.html#prepare) in _Upgrading <%= vars.product_short %>_.
+
++ Configure the default node drain behavior by doing the following:
+    1. Navigate to **Ops Manager Installation** > **<%= vars.product_tile %>** > **Plans**.
+    1. Set the default node drain behavior by configuring the following fields:
+      <table class="nice">
+          <tr>
+            <th>Field</th>
+            <th>Instructions</th>
+          </tr>
+
+          <tr>
+            <td><strong>Node Drain Timeout</strong></td>
+            <td> Enter a timeout in minutes for the node to drain pods. You must enter a valid integer between <code>0</code> and <code>1440</code>. If you set this value to <code>0</code>, the node drain does not terminate.</td>
+          </tr>
+
+          <tr>
+            <td><strong>Pod Shutdown Grace</strong></td>
+            <td>Enter a timeout in seconds for the node to wait before it forces the pod to terminate. You must enter a valid integer between <code>-1</code> and <code>86400</code>. If you set this value to <code>-1</code>, the timeout is set to the default timeout specified by the pod.</td>
+          </tr>
+
+          <tr>
+            <td><strong>Force node to drain even if it has running pods not managed by a ReplicationController, ReplicaSet, Job, DaemonSet or StatefulSet.</strong></td>
+            <td>If you enable this configuration, the node still drains when pods are not managed by a ReplicationController, ReplicaSet, Job, DaemonSet or StatefulSet.</td>
+          </tr>
+
+          <tr>
+            <td><strong>Force node to drain even if it has running DaemonSet-managed pods.</strong></td>
+            <td>If you enable this configuration, the node still drains when pods are managed by a DeamonSet.</td>
+          </tr>
+
+          <tr>
+            <td><strong>Force node to drain even if it has running running pods using emptyDir.</strong></td>
+            <td>If you enable this configuration, the node still drains when pods are using a emptyDir volume.</td>
+          </tr>
+
+          <tr>
+            <td><strong>Force node to drain even if pods are still running after timeout.</strong></td>
+            <td>If you enable this configuration and then during the timeout pods fail to drain on the worker node, the node forces running pods to terminate and the upgrade or scale continues.</td>
+          </tr>
+        </table>
+
+        <p class="note warning"><strong>Warning:</strong> If you select <strong>Force node to drain even if pods are still running after timeout</strong>, the node kills all running workloads on pods.
+        Before enabling this configuration, set <strong>Node Drain Timeout</strong> to greater than <code>0</code>.</p>
+        <p class="note warning"><strong>Warning:</strong> If you deselect <strong>Force node to drain even if it has running DaemonSet-managed pods</strong> with <strong>Enable Metric Sink Resources</strong>,
+        <strong>Enable Log Sink Resources</strong>, or <strong>Enable Node Exporter</strong> selected, the upgrade will fail as all options deploy a DaemonSet in the <code>pks-system</code> namespace.</p>
+    3. Navigate to **Ops Manager Installation Dashboard** > **Review Pending Changes**, select **Upgrade all clusters errand**, and **Apply Changes**.
+    The new behavior takes effect during the next upgrade, not immediately after applying your changes.
+
+    <p class='note'><strong>Note:</strong> You can also use the PKS CLI to configure node drain behavior.
+    To configure the default node drain behavior with the PKS CLI, run <code>pks update-cluster</code>
+    with an action flag. You can view the current node drain behavior with <code>pks cluster --details</code>.
+    For more information, see <a href="./checklist.html#configure-node-drain">Configure Node Drain Behavior</a>
+    in <i> Upgrade Preparation Checklist for <%= vars.product_short %> v1.5</i>.</p>
+
+##<a id='kubeconfig-token-expire'></a>Cannot Authenticate to an OpenID Connect-Enabled Cluster
+
+**Symptom**
+
+When you authenticate to an OpenID Connect-enabled cluster using an existing kubeconfig file, you see an authentication or authorization error.
+
+**Explanation**
+
+`users.user.auth-provider.config.id-token` and `users.user.auth-provider.config.refresh-token` contained in the kubeconfig file for the cluster may have expired.
+
+**Solution**
+
+1. Upgrade the PKS CLI to v1.2.0 or later.
+To download the PKS CLI, navigate to [Pivotal Network](https://network.pivotal.io/products/pivotal-container-service).
+For more information, see [Installing the PKS CLI](installing-pks-cli.html).
+
+1. Obtain a kubeconfig file that contains the new tokens by running the following command:
+
+    ```
+    pks get-credentials CLUSTER-NAME
+    ```
+    Where `CLUSTER-NAME` is the name of your cluster.
+    </br>
+    </br>
+    For example:
+
+    <pre class="terminal">$ pks get-credentials pks-example-cluster
+
+    Fetching credentials for cluster pks-example-cluster.
+    Context set for cluster pks-example-cluster.
+
+    You can now switch between clusters by using:
+    $kubectl config use-context &ltcluster-name&gt
+    </pre>
+
+    <%= partial "saml-sso-login" %>
+
+1. Connect to the cluster using kubectl.
+
+If you continue to see an authentication or authorization error, verify that you have sufficient access permissions for the cluster.
+
+##<a id='bosh-pks-map'></a>Error: Failed Jobs
+
+**Symptom**
+
+In stdout or log files, you see an error message referencing `post-start scripts failed` or `Failed Jobs`.
+
+**Explanation**
+
+After deploying <%= vars.product_short %>, Ops Manager runs scripts to start a number of jobs. You must configure Ops Manager to automatically run these post-deploy scripts.
+
+**Solution**
+
+Perform the following steps to configure Ops Manager to run post-deploy scripts.
+
+1. Navigate to `https://YOUR-OPS-MANAGER-FQDN/` in a browser to log in to the Ops Manager Installation Dashboard.
+
+1. Click the **BOSH Director** tile.
+
+1. Select **Director Config**.
+
+1. Select **Enable Post Deploy Scripts**.
+  <p class="note"><strong>Note</strong>: This setting enables post-deploy scripts for all tiles in your Ops Manager installation.</p>
+
+1. Click **Save**.
+
+1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
+
+1. Click **Review Pending Changes**. Review the changes that you made. For more
+information, see [Reviewing Pending Product Changes](https://docs.pivotal.io/pivotalcf/customizing/review-pending-changes.html).
+
+1. Click **Apply Changes**.
+
+1. (Optional) If it is a new deployment of <%= vars.product_short %>, follow the steps below:
+  1. On the command line, enter `pks delete-cluster` to delete the cluster. For more information, see [Deleting Clusters](delete-cluster.html).
+  1. Enter `pks create-cluster` to recreate the cluster. For more information, see [Creating Clusters](create-cluster.html).
+
+##<a id='no-such-host'></a>Error: No Such Host
+
+**Symptom**
+
+In stdout or log files, you see an error message that includes `lookup vm-WORKER-NODE-GUID on IP-ADDRESS: no such host`.
+
+**Explanation**
+
+This error occurs on GCP when the Ops Manager Director tile uses 8.8.8.8 as the DNS server.
+When this IP range is in use, the master node cannot locate the route to the worker nodes.
+
+**Solution**
+
+Use the Google internal DNS range, 169.254.169.254, as the DNS server.
+
+##<a id='storage'></a>Error: FailedMount
+
+**Symptom**
+
+In Kubernetes log files, you see a `Warning` event from kubelet with `FailedMount` as the reason.
+
+**Explanation**
+
+A persistent volume fails to connect to the Kubernetes cluster worker VM.
+
+**Diagnostics**
+
+* In your cloud provider console, verify that volumes are being created and attached to nodes.
+* From the Kubernetes cluster master node, check the controller manager logs for errors attaching persistent volumes.
+* From the Kubernetes cluster worker node, check kubelet for errors attaching persistent volumes.
+
+##<a id='login-failed'></a>Error: Login Failed
+
+**Symptom**
+
+PKS login command failed with an error "Credentials were rejected, please try again."
+
+**Explanation**
+
+You may experience this issue when a large number pods are running continuously in your <%= vars.product_short %> deployment.
+
+As a result, binary logs that track pod information accumulate over time and fill up the persistent disk of the Pivotal Container Service VM.
+
+<p class="note"><strong>Note</strong>: Binary logs on the  PKS control plane are configured to be purged after a certain number of days.</p>
+
+**Solution**
+
+1. Check the total number of pods in your <%= vars.product_short %>  deployments.
+1. If there are a large number of pods such as over 1,000 pods, then check the amount of available persistent disk space on the Pivotal Container Service VM.
+1. If available disk space is low, increase the amount of persistent disk storage on the Pivotal Container Service VM depending on the number of pods in your <%= vars.product_short %> deployment. Refer to the table in the following section.
+
+<%= partial '_increase_persistent_disk' %>

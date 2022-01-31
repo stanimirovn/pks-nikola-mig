@@ -1,0 +1,34 @@
+---
+title: Enabling, Disabling, and Using Admission Control Plugins for Enterprise PKS Clusters
+owner: PKS
+---
+<%= vars.vmware_attribution %>
+
+<strong><%= modified_date %></strong>
+
+This section describes how to enable, use, and disable admission control plugins for <%= vars.product_full %> clusters.
+
+For more information about Admission Controllers, see [Using Admission Controllers](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/) in the Kubernetes documentation.
+
+<%= vars.product_short %> supports three admission control plugins. See the following topics for details on each:
+
+<ul>
+  <li>
+	  <a href="./pod-security-policy.html">Enabling the PodSecurityPolicy Admission Plugin for <%= vars.product_short %> Clusters and Using Pod Security Polices</a>
+  </li>
+  <li>
+	  <a href="./deny-escalating-execution.html">Enabling the DenyEscalatingExec Admission Plugin for <%= vars.product_short %> Clusters</a>
+  </li>
+  <li>
+	  <a href="./security-context-deny.html">Enabling the SecurityContextDeny Admission Plugin for <%= vars.product_short %> Clusters</a>
+  </li>
+</ul>
+
+To disable one or more Admission Plugins, refer to the following topic:
+
+<ul>
+  <li>
+	  <a href="./admission-plugins-disable.html">Disabling Admission Plugins for <%= vars.product_short %> Clusters</a>
+  </li>  
+</ul>
+

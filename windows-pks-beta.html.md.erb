@@ -1,0 +1,65 @@
+---
+title: Configuring Windows Worker-Based Kubernetes Clusters (Beta)
+owner: PKS
+windowsbeta: true
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes configuring Windows worker-based Kubernetes clusters in <%= vars.product_full %>.  
+
+<p class="note warning"> <strong>IMPORTANT: </strong> Support for Windows-based Kubernetes clusters is in beta 
+and supports only vSphere with Flannel. <br><br>Do not enable this feature if you are using <%= vars.product_short %> 1.5 
+with vSphere with NSX-T, Google Cloud Platform (GCP), Azure, or Amazon Web Services (AWS).<br>
+</p>
+
+We are actively looking for feedback on this beta feature. To submit feedback, send an email to pcf-windows@pivotal.io. 
+
+
+## <a id='overview'></a>Overview
+
+In <%= vars.product_short %> you can provision a Windows worker-based Kubernetes cluster on vSphere with Flannel.  
+
+For conceptual information regarding creating PKS clusters, see [PKS Concepts](concepts.html).  
+
+## <a id='prerequisites'></a>Prerequisites
+The following are required for creating a Windows worker-based Kubernetes cluster in <%= vars.product_short %> 1.5:  
+
+* Your vSphere environment meets the [vSphere Prerequisites and Resource Requirements](vsphere-requirements.html).  
+* <%= vars.product_short %> must be installed in a vSphere with Flannel environment.  
+    <p class="note"><strong>Note:</strong> NSX-T does not support networking Windows containers. 
+      If this is a key requirement for you, submit feedback by sending an email to pcf-windows@pivotal.io.
+    </p>
+* <%= vars.product_short %> has been configured as described in [Installing Enterprise PKS on vSphere](installing-pks-vsphere.html).
+* You must have a version 2019.7 `vSphere Windows Server 2019 Stemcell` stemcell.
+
+    <p class="note"><strong>Note:</strong> Windows Server stemcells are not available on the 
+    	<a href="https://network.pivotal.io/">Pivotal Network</a>.  Windows Server stemcells must be created by using Stembuild 
+    	and your own Windows Server ISO. For information about creating vSphere Windows Server stemcells, see 
+    <a href="https://docs.pivotal.io/pivotalcf/windows/stemcells.html#stemcell">Windows Stemcells</a>
+    in <i>Downloading or Creating Windows Stemcells</i>.
+    </p>
+ 
+## <a id='install'></a> Configure a Windows Worker-Based Kubernetes Cluster
+1. Configure a Windows worker plan as described in [Plans](#plans), below.
+1. Configure Windows worker networking as described in [Networking](#networking), below.
+1. Upload the Windows Server stemcell as described in [Upload the Windows Server Stemcell](#upload-stemcell), below.
+1. Click **Apply Changes** to complete the configuration changes.
+
+### <a id='plans'></a> Plans
+<%= partial 'plans' %>
+
+### <a id='networking'></a> Networking
+<%= partial 'networking-vsphere' %>
+
+### <a id='upload-stemcell'></a> Upload the Windows Server Stemcell
+1. When prompted by Ops Manager to upload a stemcell, follow the instructions and provide your previously created 
+version 2019.7 `vSphere Windows Server 2019 Stemcell`. 
+
+## <a id='create-cluster'></a> Create a Windows Worker-Based Cluster
+
+1. To create a Windows worker-based cluster follow the steps in [Creating Clusters](create-cluster.html).
+
+## <a id='feedback'></a>Feedback
+
+We are actively looking for feedback on this beta feature. To submit feedback, send an email to pcf-windows@pivotal.io. 

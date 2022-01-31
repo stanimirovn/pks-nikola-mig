@@ -1,0 +1,110 @@
+---
+title: GCP Prerequisites and Resource Requirements
+owner: PKS
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes the prerequisites and resource requirements for installing <%= vars.product_full %> on Google Cloud Platform (GCP).
+
+##<a id='prerequisites'></a> Prerequisites
+
+You can install <%= vars.product_short %> on GCP manually or by using Terraform.
+
+<%= partial "/pcf/warning-terraform" %>
+
+* Prerequisites for [Installing <%= vars.product_short %> Manually](#manual)
+* Prerequisites for [Installing <%= vars.product_short %> Using Terraform](#terraform)
+
+###<a name='manual'></a> Installing <%= vars.product_short %> Manually
+
+If you are installing <%= vars.product_short %> manually, do the following before deploying <%= vars.product_short %>:
+
+1. Review [Resource Requirements](#resources) below.
+1. Install and configure Ops Manager. To install and configure Ops Manager,
+follow the instructions in [Installing and Configuring Ops Manager on GCP](gcp-om-install-config.html).
+1. Create service accounts for Kubernetes master and worker nodes.
+To create the service accounts,
+follow the instructions in [Creating Service Accounts in GCP for <%= vars.product_short %>](gcp-service-accounts.html).
+  <p class="note"><strong>Note:</strong> Perform this step after you install and configure Ops Manager.</p>
+1. Create a load balancer to access the PKS API from outside the network
+and run `pks` commands from your local workstation. To create a load balancer in GCP, follow the instructions in
+[Creating a GCP Load Balancer for the PKS API](./gcp-api-load-balancer.html).
+    <p class="note"><strong>Note:</strong> Perform this step before you install <%= vars.product_short %>.
+    After you install <%= vars.product_short %>, you must complete the load balancer configuration.
+    To complete the load balancer configuration,
+    do the procedure in [Create a Network Tag for the Firewall Rule](./gcp-api-load-balancer.html#tag).</p>
+
+###<a name='terraform'></a> Installing <%= vars.product_short %> Using Terraform
+
+If you are installing <%= vars.product_short %> using Terraform, do the following before deploying <%= vars.product_short %>:
+
+1. Review [Resource Requirements](#resources) below.
+1. Install and configure Ops Manager. To install and configure Ops Manager,
+follow the instructions in [Installing and Configuring Ops Manager on GCP](gcp-om-install-config.html).
+
+##<a id='resources'></a> Resource Requirements
+
+Installing Ops Manager and <%= vars.product_short %> requires the following virtual machines (VMs):
+
+<table>
+  <tr>
+    <th>VM</th>
+    <th>CPU</th>
+    <th>RAM</th>
+    <th>Storage</th>
+  </tr>
+  <tr>
+    <td>Pivotal Container Service</td>
+    <td>2</td>
+    <td>8 GB</td>
+    <td>16 GB ^&#x2A;</td>
+  </tr>
+  <tr>
+    <td>Pivotal Ops Manager</td>
+    <td>1</td>
+    <td>8 GB</td>
+    <td>160 GB</td>
+  </tr>
+  <tr>
+    <td>BOSH Director</td>
+    <td>2</td>
+    <td>8 GB</td>
+    <td>16 GB</td>
+  </tr>
+</table>
+
+<%= partial '_increase_persistent_disk' %>
+
+<h3> Kubernetes Cluster Resources </h3>
+
+Each Kubernetes cluster provisioned through <%= vars.product_short %> deploys the VMs listed below.
+
+If you deploy more than one Kubernetes cluster, you must scale your allocated resources appropriately.
+
+<table>
+  <tr>
+    <th>VM Name</th>
+    <th>Number</th>
+    <th>CPU Cores</th>
+    <th>RAM</th>
+    <th>Ephemeral Disk</th>
+    <th>Persistent Disk</th>
+  </tr>
+  <tr>
+    <td>master</td>
+    <td>1</td>
+    <td>2</td>
+    <td>4 GB</td>
+    <td>32 GB</td>
+    <td>5 GB</td>
+  </tr>
+  <tr>
+    <td>worker</td>
+    <td>1</td>
+    <td>2</td>
+    <td>4 GB</td>
+    <td>32 GB</td>
+    <td>50 GB</td>
+  </tr>
+</table>

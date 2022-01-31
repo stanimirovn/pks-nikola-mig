@@ -1,0 +1,34 @@
+---
+title: Troubleshooting Enterprise PKS Management Console 
+owner: PKS
+---
+
+<strong><%= modified_date %></strong>
+
+The following sections describe how to troubleshoot failures to deploy of the VMware <%= vars.product_short %> Management Console appliance and of <%= vars.product_short %> instances from the management console.
+
+## <a id='ova-fails'></a> Deployment of the <%= vars.product_short %> Management Console Appliance Fails
+
+If the <%= vars.product_short %> Management Console appliance fails to deploy from the OVA template, attempt the following steps.
+
+1. Use SSH to log in to the <%= vars.product_short %> Management Console appliance VM as `root` user.
+<br>Use the password that you specified when you  deployed the OVA.
+1. Run the following command to obtain the server logs.
+<br>`journalctl -u pks-mgmt-server > server.log`
+1. If the logs do not provide the solution, delete the appliance VM from vCenter Server and attempt to deploy it again.
+
+## <a id='pks-deployment-fails'></a>Deployment of <%= vars.product_short %> from the Management Console Fails
+
+If <%= vars.product_short %> fails to deploy from the management console, remove the failed deployment and attempt to deploy <%= vars.product_short %> again. 
+
+Follow the procedure in [Delete Your Enterprise PKS Deployment](delete-console-deployment.html) to cleanly remove all <%= vars.product_short %> components from vSphere and to clean up related objects in the management console appliance.
+
+## <a id='log-insight'></a>Obtain the vRealize Log Insight Agent ID for <%= vars.product_short %> Management Console 
+
+If you enabled integration with VMware vRealize Log Insight, <%= vars.product_short %> Management Console generates a unique vRealize Log Insight agent ID for the appliance. You must provide this agent ID to vRealize Log Insight so that it can pull the appropriate logs from the appliance.
+
+You obtain the vRealize Log Insight agent ID as follows:
+
+1. Use SSH to log in to the <%= vars.product_short %> Management Console appliance VM as `root` user.
+1. Run the following command to obtain the ID.<pre>grep LOGINSIGHT_ID /etc/vmware/environment | cut -d= -f2</pre>The resulting ID will be similar to `59debec7-daba-4770-9d21-226ffd743843`.
+1. Log in to the vRealize Log Insight Web user interface as administrator and add the agent ID to your list of agents.

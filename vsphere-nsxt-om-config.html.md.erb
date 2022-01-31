@@ -1,0 +1,335 @@
+---
+title: Configuring BOSH Director with NSX-T for Enterprise PKS
+owner: Ops Manager
+iaas: vSphere
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes how to configure BOSH Director for vSphere with NSX-T integration for <%= vars.product_full %>.
+
+##<a id='prerequisites'></a>Prerequisites
+
+Before you begin this procedure, ensure that you have successfully completed all preceding steps for installing <%= vars.product_short %> on vSphere with NSX-T, including:
+
+<ul>
+  <li>
+    <a href="./vsphere-nsxt-index-prepare.html">Preparing to Install <%= vars.product_short %> on vSphere with NSX-T Data Center</a>
+  </li>
+  <li>
+    <a href="./vsphere-nsxt-rpd-mpd.html">Installing and Configuring NSX-T for <%= vars.product_short %></a>
+  </li>
+  <li>
+    <a href="./nsxt-prepare-mgmt-plane.html">Creating the <%= vars.product_short %> Management Plane</a>
+  </li>
+  <li>
+    <a href="./nsxt-prepare-compute-plane.html">Create <%= vars.product_short %> Compute Plane</a>
+  </li>
+  <li>
+    <a href="./vsphere-nsxt-om-deploy.html">Deploying Ops Manager with NSX-T for <%= vars.product_short %></a>
+  </li>
+  <li>
+    <a href="./nsxt-generate-ca-cert.html">Generating and Registering the NSX Manager Certificate for <%= vars.product_short %></a>
+  </li>
+</ul>
+
+## <a id="set-up"></a>Step 1: Log in to Ops Manager
+
+1. Log in to Ops Manager with the username and password credentials that you set up in 
+[Configure Ops Manager for <%= vars.product_short %>](vsphere-nsxt-om-deploy.html#config-om).
+
+1. Click the **BOSH Director for vSphere** tile.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-01.png") %>
+
+## <a id='vcenter-config'></a>Step 2: Configure vCenter for <%= vars.product_short %>
+
+1. Select **vCenter Config**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-02.png") %>
+
+1. Enter the following information:
+    * **Name**: A name that you provide for your vCenter configuration. 
+    This field is used to identify the datacenter configuration in Ops Manager if you are configuring multiple datacenters.
+    * **vCenter Host**: The hostname of the vCenter that manages ESXi/vSphere.
+    * **vCenter Username**: A vCenter username with create and delete privileges for virtual machines (VMs) and folders.
+    * **vCenter Password**: The password for the vCenter user specified above.
+    * **Datacenter Name**: The name of the datacenter as it appears in vCenter.
+    * **Virtual Disk Type**: The Virtual Disk Type to provision for all VMs. For guidance on selecting a virtual disk type, see [vSphere Virtual Disk Types](https://docs.pivotal.io/pivotalcf/customizing/disk-format.html).
+    * **Ephemeral Datastore Names (comma delimited)**: The names of the datastores that store ephemeral VM disks deployed by Ops Manager.
+    * **Persistent Datastore Names (comma delimited)**: The names of the datastores that store persistent VM disks deployed by Ops Manager.
+
+1. Select **NSX Networking**, then select **NSX-T**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-03.png") %>
+
+1. Configure NSX-T networking as follows:
+    * **NSX Address**: Enter the IP address of the NSX Manager host.
+    * **NSX Username** and **NSX Password**: Enter the NSX Manager username and password.
+    * **NSX CA Cert**: Provide the CA certificate in PEM format that authenticates to the NSX server. Open the [NSX CA Cert that you generated](nsxt-generate-ca-cert.html) and copy/paste its content to this field.
+
+1. Configure the following folder names:
+    * **VM Folder**: The vSphere datacenter folder where Ops Manager places VMs. Enter `pks_vms`.
+    * **Template Folder**: The vSphere datacenter folder where Ops Manager places VMs. Enter `pks_templates`.
+    * **Disk path Folder**: The vSphere datastore folder where Ops Manager creates attached disk images. You must not nest this folder. Enter `pks_disk`.
+
+    <p class="note"><strong>Note</strong>: After your initial deployment, you cannot edit the VM Folder, Template Folder, and Disk path Folder names.</p>
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-04.png") %>
+
+1. Click **Save**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-05.png") %>
+
+## <a id='dir-config'></a>Step 3: Configure BOSH Director
+
+1. Select **Director Config**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-06.png") %>
+
+1. In the **NTP Servers (comma delimited)** field, enter your NTP server addresses.
+
+    <p class="note"><strong>Note:</strong> The NTP server configuration only updates
+    after VM recreation. Ensure that you select the <strong>Recreate all VMs</strong> checkbox
+    if you modify the value of this field.</p>
+
+1. Leave the **JMX Provider IP Address** field blank.
+
+1. Leave the **Bosh HM Forwarder IP Address** field blank.
+
+1. Select the **Enable VM Resurrector Plugin** to enable BOSH Resurrector functionality.
+
+1. Select **Enable Post Deploy Scripts** to run a post-deploy script after deployment. This script allows the job to execute additional commands against a deployment.
+  <p class="note"><strong>Note</strong>: You must enable post-deploy scripts to install <%= vars.product_short %>.</p>
+
+1. Select **Recreate all VMs** to force BOSH to recreate all VMs on the next deploy. This process does not destroy any persistent disk data.
+
+1. For typical <%= vars.product_short %> deployments, the default settings for all other BOSH Director configuration parameters are suitable. Optionally you can apply additional configurations to BOSH Director. See [Director Config Page](https://docs.pivotal.io/pivotalcf/om/vsphere/config.html#dir-config) in <em>Configuring BOSH Director on vSphere</em> in the PCF documentation for details.
+<p class="note"><strong>Note</strong>: If you need to be able to remotely access the BOSH Director VM using the BOSH CLI, and you are deploying <%= vars.product_short %> with NSX-T in a NAT topology, you must provide the <strong>Director Hostname</strong> for BOSH at the time of installation. See <a href="https://docs.pivotal.io/pivotalcf/om/vsphere/config.html#dir-config">Director Config Page</a> in <em>Configuring BOSH Director on vSphere</em> in the PCF documentation for details.</p>
+
+1. Click **Save**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-07.png") %>
+
+## <a id='create-az'></a>Step 4: Create Availability Zones
+
+Ops Manager Availability Zones correspond to your vCenter clusters and resource pools. 
+
+Multiple Availability Zones allow you to provide high-availability and load balancing to your applications.
+When you run more than one instance of an application, Ops Manager balances those instances 
+across all of the Availability Zones assigned to the application. 
+
+For a highly available installation of your chosen runtime, use at least three availability zones.
+
+<p class="note"><strong>Note</strong>: For more information about AZs and high availability in
+vSphere, see <a href="https://docs.pivotal.io/pivotalcf/refarch/vsphere/vsphere_ref_arch.html#high-availability">Compute and HA Considerations</a> in
+<em>vSphere Reference Architecture</em>.</p>
+
+1. Select **Create Availability Zones**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-08.png") %>
+
+1. Use the following steps to create one or more Availability Zones for <%= vars.product_short %> to use:
+    * Click **Add** and create the <%= vars.product_short %> Management AZ.
+    * Enter a unique **Name** for the Availability Zone, such as `AZ-MGMT`.
+    * Select the IaaS configuration (vSphere/vCenter).
+    * Enter the name of an existing vCenter **Cluster** to use as an Availability Zone, such as `COMP-Cluster-1`.
+    * Enter the name of the <%= vars.product_short %> Management **Resource Pool** in the vCenter cluster that you specified above, such as `RP-MGMT-PKS`. The jobs running in this Availability Zone share the CPU and memory resources defined by the pool.
+    * Click **Add Cluster** and create at least one <%= vars.product_short %> Compute AZ.
+    * Specify the **Cluster** and the **Resource Pool**, such as `RP-PKS-AZ`. Alternatively, specify the **Cluster** and the **Host Group**. See [Using vSphere Host Group](./vsphere-host-group.html) for more information.
+    * Add additional clusters as necessary. Click the trash icon to delete a cluster. The first cluster cannot be deleted.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-09.png") %>
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-11.png") %>
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-13.png") %>
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-29-host-group.png") %>
+
+1. Click **Save**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-12.png") %>
+
+## <a id='create-networks'></a>Step 5: Create Networks
+
+1. Select **Create Networks**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-15.png") %>
+
+1. Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
+
+1. Click **Add Network**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-16.png") %>
+
+1. Create the following network:
+  * `NET-MGMT-PKS`: Network for Ops Manager, BOSH Director, and the PKS API. This network maps to the NSX logical switch created for the <%= vars.product_short %> Management Network. See <a href="./nsxt-prepare-mgmt-plane.html">Creating <%= vars.product_short %> Management Plane</a>.
+
+      <p class="note"><strong>Note</strong>: NSX-T automatically creates the service network to be used by the master and worker nodes (VMs) for Kubernetes clusters managed by <%= vars.product_short %>. You should not manually create this network.
+
+    Use the following values as a guide when you define the network in BOSH. Replace the IP addresses with ranges you defined for the <a href="./nsxt-prepare-mgmt-plane.html"><%= vars.product_short %> Management Network.</a>. Reserve any IP addresses from the subnet that are already in use, such as the IP for Ops Manager and subnet gateway.
+    <table>
+    <tr>
+      <th rowspan="7">Infrastructure<br> Network</th>
+      <th>Field</th>
+      <th>Configuration</th>
+    </tr>
+    <tr>
+      <td>Name</td>
+      <td><code>NET-MGMT-PKS</code></td>
+    </tr>
+    <tr>
+      <td>vSphere Network Name</td>
+      <td><code>LS-MGMT-PKS</code></td>
+    </tr>
+    <tr>
+      <td>CIDR</td>
+      <td><code>10.0.0.0/24</code></td>
+    </tr>
+    <tr>
+      <td>Reserved IP Ranges</td>
+      <td><code>10.0.0.1-10.0.0.2</code></td>
+    </tr>
+    <tr>
+      <td>DNS</td>
+      <td><code>10.20.20.1</code></td>
+    </tr>
+    <tr>
+      <td>Gateway</td>
+      <td><code>10.0.0.1</code></td>
+    </tr>
+    </table>
+
+1. Select the **AZ-MGMT** Availability Zone to use with the `NET-MGMT-PKS` network.
+
+      <p class="note"><strong>Note</strong>: Do not select the COMPUTE network at this point in the configuration. 
+      It will be configured at the end of the procedure.</p>
+
+1. Click **Save**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-17.png") %>
+
+## <a id='assign-azs'></a>Step 6: Assign AZs and Networks
+
+1. Select **Assign AZs and Networks**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-18.png") %>
+
+1. Use the drop-down menu to select a **Singleton Availability Zone**. The Ops Manager Director installs in this Availability Zone. For <%= vars.product_short %>, this will be the `AZ-MGMT` availability zone.
+
+1. Use the drop-down menu to select a **Network** for BOSH Director. BOSH Director runs on the <%= vars.product_short %> Management Plane network. Select the `NST-MGTM-PKS` network.
+
+1. Click **Save**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-19.png") %>
+
+## <a id='security-config'></a>Step 7: Configure Security
+
+1. Select **Security**.
+
+1. In **Trusted Certificates**, enter a custom certificate authority (CA) certificate to insert into your organization's certificate trust chain. 
+This feature allows all BOSH-deployed components in your deployment to trust a custom root certificate.<br/><br/> 
+
+    If you are using a private [Docker registry](https://docs.pivotal.io/pivotalcf/opsguide/docker-registry.html), such as VMware Harbor, use this field to enter the certificate for the registry. See [Integrating Harbor Registry with <%= vars.product_short %>](https://docs.pivotal.io/vmware-harbor/integrating-pks.html) for details.
+
+1. Choose **Generate passwords** or **Use default BOSH password**. Use the **Generate passwords** option for increased security.
+
+1. Click **Save**. To view your saved Director password, click the **Credentials** tab.
+
+## <a id='bosh-dns'></a> Step 8: Configure BOSH DNS
+
+1. Select <strong>BOSH DNS Config</strong>.
+
+1. (Optional) In <strong>Excluded Recursors</strong>, enter a list of prohibited recursor addresses.
+
+1. (Optional) In <strong>Recursor Timeout</strong>, enter a time limit for contacting the connected recursors. This includes dialing, writing, and reading from the recursor. If any of these actions exceeds the time limit you set, the action fails.
+    <p class="note"><strong>Note</strong>: This time limit must include one of the Go parse duration time units. For example, entering <code>5s</code> sets the timeout limit to five seconds. For more information about supported time units, see <a href="https://golang.org/pkg/time/#ParseDuration">func ParseDuration</a> in the Go Programming Language documentation.</p></li>
+1. (Optional) In <strong>Handlers</strong>, enter a list of custom domain handlers in JSON format.
+1. Click <strong>Save</strong>.</li>
+
+## <a id='syslog'></a>Step 9: Configure Logging
+
+1. Select **Syslog**.
+
+1. (Optional) To send BOSH Director system logs to a remote server, select **Yes**.
+
+1. In the **Address** field, enter the IP address or DNS name for the remote server.
+
+1. In the **Port** field, enter the port number that the remote server listens on.
+
+1. In the **Transport Protocol** dropdown menu, select **TCP** or **UDP**. This selection determines which transport protocol is used to send the logs to the remote server.
+
+1. (Optional) Select the **Enable TLS** checkbox to send encrypted logs to remote server with TLS. After you select the checkbox, perform the following steps:
+  1. Enter either the name or SHA1 fingerprint of the remote peer in **Permitted Peer**.
+  1. Enter the SSL certificate for the remote server in **SSL Certificate**.
+<p class="note">**Note**: For an optimal security configuration, enable TLS encryption when you are forwarding logs. Logs can contain sensitive information, such as cloud provider credentials.</p>
+1. (Optional) Enter an integer in **Queue Size**. This value specifies the number of log messages held in the buffer. The default value is 100,000.
+1. (Optional) Select the checkbox to **Forward Debug Logs** to an external source. This option is deselected by default. If you select it, you may generate a large amount of log data.
+1. (Optional) Enter configuration details for rsyslog in the **Custom rsyslog Configuration** field. This field requires the rainerscript syntax.
+1. Click **Save Syslog Settings**.
+
+## <a id='resource-config'></a>Step 10: Configure Resources
+
+1. Select **Resource Config**.
+
+1. Adjust any values as necessary for your deployment. Under the **Instances**, **Persistent Disk Type**, and **VM Type** fields,
+choose **Automatic** from the drop-down menu to allocate the recommended resources for the job. If the **Persistent Disk Type** field reads **None**, the job does not require persistent disk space.
+
+    <p class="note"><strong>Note</strong>: Ops Manager requires a Director VM with at least 8&nbsp;GB memory.</p>
+
+    <p class="note"><strong>Note</strong>: If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the updated recommended allocation.</p>
+
+1. Click **Save**.
+
+## <a id='custom-vm-extensions'></a> Step 11: (Optional) Add Custom VM Extensions
+
+Use the Ops Manager API to add custom properties to your VMs such as associated security groups and load balancers. 
+
+For more information, see [Managing Custom VM Extensions](https://docs.pivotal.io/pivotalcf/customizing/custom-vm-extensions.html).
+
+## <a id='deploy-bosh'></a>Step 12: Deploy BOSH
+
+Follow the steps below to deploy BOSH:
+
+1. Go to the Ops Manager **Installation Dashboard**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-20.png") %>
+
+1. Click **Review Pending Changes**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-21.png") %>
+
+1. Click **Apply Changes**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-22.png") %>
+
+1. Confirm changes applied successfully.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-23.png") %>
+
+1. Check BOSH VM. Log in to vCenter and check for the `p-bosh` VM deployment in the <%= vars.product_short %> Management resource pool.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-24.png") %>
+
+## <a id='deploy-bosh'></a>Step 12: Update Network Availability Zones
+
+Ater BOSH is successfully deployed, update the network you defined above (`NET-MGMT-PKS`) to include each of the COMPUTE AZs that you defined. This ensures that both the Management AZ and the Compute AZs appear in the <%= vars.product_tile %> tile for the Plans.
+
+1. Return to the BOSH tile and click **Create Networks**.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-26.png") %>
+
+1. Edit the network (`NET-MGMT-PKS`) and each COMPUTE AZ.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-27.png") %>
+
+1. Click Save.
+
+    <%= image_tag("images/nsxt/bosh/config-bosh-28.png") %>
+
+1. Review pending changes, and click **Apply Changes** to redeploy BOSH.
+
+##<a id='next'></a> Next Step
+
+<a href="./nsxt-generate-pi-cert.html">Generate and Register the NSX Manager Superuser Principal Identity Certificate and Key for <%= vars.product_short %></a>.
