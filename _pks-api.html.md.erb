@@ -23,7 +23,7 @@ Perform the following steps:
     <% end %>
 1. Under **API Hostname (FQDN)**, enter the FQDN that you registered to point to the PKS API load balancer, such as `api.pks.example.com`.
 To retrieve the public IP address or FQDN of the PKS API load balancer,
-<% if current_page.data.iaas == "AWS" or current_page.data.iaas == "Azure" %>
+<% if current_page.data.iaas == "AWS" || current_page.data.iaas == "Azure" %>
 see the `terraform.tfstate` file.
 <% else %>
 log in to your IaaS console.
